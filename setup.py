@@ -44,12 +44,12 @@ setup(name="equip",
       zip_safe=False,
       tests_require=['pytest'],
       cmdclass={'test': PyTest},
-      
-      # TODO: List of packages that this one depends upon:   
+
+      # TODO: List of packages that this one depends upon:
       install_requires=[],
       # TODO: List executable scripts, provided by the package (this is just an example)
       entry_points={
-        'console_scripts': 
+        'console_scripts':
             ['equip=equip:main']
       }
 )
