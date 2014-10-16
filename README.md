@@ -9,6 +9,22 @@ The instrumentation is designed around the injection of bytecode inside the
 bytecode of the program to be instrumented. However, the developer does not need to know
 anything about the Python bytecode since the injected code is Python source.
 
+## Installation
+The package can be installed with pip:
+```bash
+$ pip install equip
+```
+
+Or you can manually install it:
+```bash
+$ git clone https://github.com/neuroo/equip.git
+$ cd equip
+$ python setup.py install
+```
+
+## Documentation
+The documentation is available on http://equip.readthedocs.org
+
 ## Simplest Example
 
 The following example shows how to write a simple instrumentation tool that will print all
@@ -53,18 +69,6 @@ would usually do. If the injected code has external dependencies, you can simply
 A more realistic example can be found in the examples:
   * [Call counters](https://github.com/neuroo/equip/blob/master/examples/counter/counter_instrument.py): Instrument a program and record calls for each method during its execution. The output is then serialized to JSON.
 
-
-## Installation
-You can manually install equip:
-
-```bash
-$ git clone https://github.com/neuroo/equip.git
-$ cd equip
-$ python setup.py install
-```
-
-## Documentation
-The documentation is available on http://equip.readthedocs.org
 
 ## Versioning and Experimental Status
 The current status of equip should be considered experimental. There is much more tests
