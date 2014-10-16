@@ -113,7 +113,7 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output ----------------------------------------------
 
-if not on_rtd:
+if not os.environ.get('READTHEDOCS', None) == 'True':
   import sphinx_rtd_theme
   html_theme = 'sphinx_rtd_theme'
   html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
