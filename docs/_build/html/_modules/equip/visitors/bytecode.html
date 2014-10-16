@@ -1,0 +1,595 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>equip.visitors.bytecode &mdash; equip 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="equip 0.1 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../index.html" class="fa fa-home"> equip</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#current-limitations">Current Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#virtualenv">virtualenv</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gettingstarted.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#instrument">Instrument</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#visitors">Visitors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#simplerewriter">SimpleRewriter</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../equip.html">equip package</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">equip</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>equip.visitors.bytecode</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for equip.visitors.bytecode</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">  equip.visitors.bytecode</span>
+<span class="sd">  ~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">   Callback the visitor method for each encountered opcode.</span>
+
+<span class="sd">  :copyright: (c) 2014 by Romain Gaucher (@rgaucher)</span>
+<span class="sd">  :license: Apache 2, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">opcode</span>
+<span class="kn">from</span> <span class="nn">..utils.log</span> <span class="kn">import</span> <span class="n">logger</span>
+
+
+<div class="viewcode-block" id="BytecodeVisitor"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor">[docs]</a><span class="k">class</span> <span class="nc">BytecodeVisitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A visitor to visit each instruction in the bytecode. For example,</span>
+<span class="sd">    the following code::</span>
+
+<span class="sd">      class CallFunctionVisitor(BytecodeVisitor):</span>
+<span class="sd">        def __init__(self):</span>
+<span class="sd">          BytecodeVisitor.__init__(self)</span>
+
+<span class="sd">        def visit_call_function(self, oparg):</span>
+<span class="sd">          print &quot;Function call with %d args&quot; % oparg</span>
+
+<span class="sd">    Prints whenever a ``CALL_FUNCTION`` opcode is visited and prints out</span>
+<span class="sd">    its number of arguments (the oparg for this opcode).</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="BytecodeVisitor.toMethodName"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.toMethodName">[docs]</a>  <span class="k">def</span> <span class="nf">toMethodName</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&#39;visit_&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit">[docs]</a>  <span class="k">def</span> <span class="nf">visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cflow_in</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Callback of the visitor. It dynamically constructs the name</span>
+<span class="sd">      of the specialized visitor to call based on the name of the opcode.</span>
+
+<span class="sd">      :param index: Bytecode index.</span>
+<span class="sd">      :param op: The opcode that is currently visited.</span>
+<span class="sd">      :param arg: The expanded oparg (i.e., constants, names, etc. are resolved).</span>
+<span class="sd">      :param lineno: The line number associated with the opcode.</span>
+<span class="sd">      :param cflow_in: ``True`` if the current ``index`` is the target of a jump.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Let&#39;s start with a slow impl of the jump table, with</span>
+    <span class="c"># reflection</span>
+    <span class="n">method_name</span> <span class="o">=</span> <span class="n">BytecodeVisitor</span><span class="o">.</span><span class="n">toMethodName</span><span class="p">(</span><span class="n">opcode</span><span class="o">.</span><span class="n">opname</span><span class="p">[</span><span class="n">op</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">):</span>
+      <span class="n">meth</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">op</span> <span class="o">&lt;</span> <span class="n">opcode</span><span class="o">.</span><span class="n">HAVE_ARGUMENT</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%03d</span><span class="s"> </span><span class="si">%26s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">lineno</span><span class="p">,</span> <span class="n">method_name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">meth</span><span class="p">()</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%03d</span><span class="s"> </span><span class="si">%26s</span><span class="s">( </span><span class="si">%s</span><span class="s"> )&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">lineno</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">arg</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">meth</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Method not found: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">method_name</span><span class="p">)</span>
+
+
+  <span class="c"># 2.7 specific visitors. See https://docs.python.org/2/library/dis.html</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_stop_code"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_stop_code">[docs]</a>  <span class="k">def</span> <span class="nf">visit_stop_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_pop_top"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_pop_top">[docs]</a>  <span class="k">def</span> <span class="nf">visit_pop_top</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_rot_two"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_rot_two">[docs]</a>  <span class="k">def</span> <span class="nf">visit_rot_two</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_rot_three"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_rot_three">[docs]</a>  <span class="k">def</span> <span class="nf">visit_rot_three</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_dup_top"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_dup_top">[docs]</a>  <span class="k">def</span> <span class="nf">visit_dup_top</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_rot_four"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_rot_four">[docs]</a>  <span class="k">def</span> <span class="nf">visit_rot_four</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_nop"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_nop">[docs]</a>  <span class="k">def</span> <span class="nf">visit_nop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_unary_positive"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_unary_positive">[docs]</a>  <span class="k">def</span> <span class="nf">visit_unary_positive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_unary_negative"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_unary_negative">[docs]</a>  <span class="k">def</span> <span class="nf">visit_unary_negative</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_unary_not"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_unary_not">[docs]</a>  <span class="k">def</span> <span class="nf">visit_unary_not</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_unary_convert"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_unary_convert">[docs]</a>  <span class="k">def</span> <span class="nf">visit_unary_convert</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_unary_invert"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_unary_invert">[docs]</a>  <span class="k">def</span> <span class="nf">visit_unary_invert</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_power"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_power">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_power</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_multiply"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_multiply">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_multiply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_divide"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_divide">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_divide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_modulo"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_modulo">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_modulo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_add"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_add">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_add</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_subtract"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_subtract">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_subtract</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_subscr"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_subscr">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_subscr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_floor_divide"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_floor_divide">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_floor_divide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_true_divide"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_true_divide">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_true_divide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_floor_divide"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_floor_divide">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_floor_divide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_true_divide"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_true_divide">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_true_divide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_slice_0"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_slice_0">[docs]</a>  <span class="k">def</span> <span class="nf">visit_slice_0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_slice_1"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_slice_1">[docs]</a>  <span class="k">def</span> <span class="nf">visit_slice_1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_slice_2"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_slice_2">[docs]</a>  <span class="k">def</span> <span class="nf">visit_slice_2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_slice_3"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_slice_3">[docs]</a>  <span class="k">def</span> <span class="nf">visit_slice_3</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_slice_0"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_0">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_slice_0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_slice_1"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_1">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_slice_1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_slice_2"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_2">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_slice_2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_slice_3"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_3">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_slice_3</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_delete_slice_0"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_0">[docs]</a>  <span class="k">def</span> <span class="nf">visit_delete_slice_0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_delete_slice_1"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_1">[docs]</a>  <span class="k">def</span> <span class="nf">visit_delete_slice_1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_delete_slice_2"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_2">[docs]</a>  <span class="k">def</span> <span class="nf">visit_delete_slice_2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_delete_slice_3"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_3">[docs]</a>  <span class="k">def</span> <span class="nf">visit_delete_slice_3</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_map"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_map">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_add"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_add">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_add</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_subtract"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_subtract">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_subtract</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_multiply"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_multiply">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_multiply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_divide"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_divide">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_divide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_modulo"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_modulo">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_modulo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_subscr"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_subscr">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_subscr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_delete_subscr"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_delete_subscr">[docs]</a>  <span class="k">def</span> <span class="nf">visit_delete_subscr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_lshift"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_lshift">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_lshift</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_rshift"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_rshift">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_rshift</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_and"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_and">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_and</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_xor"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_xor">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_xor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_binary_or"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_binary_or">[docs]</a>  <span class="k">def</span> <span class="nf">visit_binary_or</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_power"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_power">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_power</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_get_iter"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_get_iter">[docs]</a>  <span class="k">def</span> <span class="nf">visit_get_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_print_expr"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_print_expr">[docs]</a>  <span class="k">def</span> <span class="nf">visit_print_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_print_item"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_print_item">[docs]</a>  <span class="k">def</span> <span class="nf">visit_print_item</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_print_newline"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_print_newline">[docs]</a>  <span class="k">def</span> <span class="nf">visit_print_newline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_print_item_to"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_print_item_to">[docs]</a>  <span class="k">def</span> <span class="nf">visit_print_item_to</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_print_newline_to"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_print_newline_to">[docs]</a>  <span class="k">def</span> <span class="nf">visit_print_newline_to</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_lshift"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_lshift">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_lshift</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_rshift"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_rshift">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_rshift</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_and"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_and">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_and</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_xor"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_xor">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_xor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_inplace_or"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_or">[docs]</a>  <span class="k">def</span> <span class="nf">visit_inplace_or</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_break_loop"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_break_loop">[docs]</a>  <span class="k">def</span> <span class="nf">visit_break_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_with_cleanup"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_with_cleanup">[docs]</a>  <span class="k">def</span> <span class="nf">visit_with_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_load_locals"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_load_locals">[docs]</a>  <span class="k">def</span> <span class="nf">visit_load_locals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_return_value"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_return_value">[docs]</a>  <span class="k">def</span> <span class="nf">visit_return_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_import_star"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_import_star">[docs]</a>  <span class="k">def</span> <span class="nf">visit_import_star</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_exec_stmt"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_exec_stmt">[docs]</a>  <span class="k">def</span> <span class="nf">visit_exec_stmt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_yield_value"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_yield_value">[docs]</a>  <span class="k">def</span> <span class="nf">visit_yield_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_pop_block"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_pop_block">[docs]</a>  <span class="k">def</span> <span class="nf">visit_pop_block</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_end_finally"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_end_finally">[docs]</a>  <span class="k">def</span> <span class="nf">visit_end_finally</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_build_class"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_build_class">[docs]</a>  <span class="k">def</span> <span class="nf">visit_build_class</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+  <span class="c">#</span>
+  <span class="c"># Opcode with arguments bellow</span>
+  <span class="c">#</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_name"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_name">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_delete_name"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_delete_name">[docs]</a>  <span class="k">def</span> <span class="nf">visit_delete_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_unpack_sequence"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_unpack_sequence">[docs]</a>  <span class="k">def</span> <span class="nf">visit_unpack_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_for_iter"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_for_iter">[docs]</a>  <span class="k">def</span> <span class="nf">visit_for_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_rel</span><span class="p">):</span> <span class="c"># jrel</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_list_append"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_list_append">[docs]</a>  <span class="k">def</span> <span class="nf">visit_list_append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_attr"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_attr">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_delete_attr"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_delete_attr">[docs]</a>  <span class="k">def</span> <span class="nf">visit_delete_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_global"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_global">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_delete_global"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_delete_global">[docs]</a>  <span class="k">def</span> <span class="nf">visit_delete_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_dup_topx"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_dup_topx">[docs]</a>  <span class="k">def</span> <span class="nf">visit_dup_topx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_load_const"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_load_const">[docs]</a>  <span class="k">def</span> <span class="nf">visit_load_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constant</span><span class="p">):</span> <span class="c"># hasconst</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_load_name"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_load_name">[docs]</a>  <span class="k">def</span> <span class="nf">visit_load_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_build_tuple"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_build_tuple">[docs]</a>  <span class="k">def</span> <span class="nf">visit_build_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_build_list"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_build_list">[docs]</a>  <span class="k">def</span> <span class="nf">visit_build_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_build_set"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_build_set">[docs]</a>  <span class="k">def</span> <span class="nf">visit_build_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_build_map"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_build_map">[docs]</a>  <span class="k">def</span> <span class="nf">visit_build_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_load_attr"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_load_attr">[docs]</a>  <span class="k">def</span> <span class="nf">visit_load_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name attr</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_compare_op"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_compare_op">[docs]</a>  <span class="k">def</span> <span class="nf">visit_compare_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compare</span><span class="p">):</span> <span class="c"># hascompare</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_import_name"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_import_name">[docs]</a>  <span class="k">def</span> <span class="nf">visit_import_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_import_from"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_import_from">[docs]</a>  <span class="k">def</span> <span class="nf">visit_import_from</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_jump_forward"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_jump_forward">[docs]</a>  <span class="k">def</span> <span class="nf">visit_jump_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_rel</span><span class="p">):</span> <span class="c"># jrel</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_jump_if_false_or_pop"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_jump_if_false_or_pop">[docs]</a>  <span class="k">def</span> <span class="nf">visit_jump_if_false_or_pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_abs</span><span class="p">):</span> <span class="c"># jabs</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_jump_if_true_or_pop"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_jump_if_true_or_pop">[docs]</a>  <span class="k">def</span> <span class="nf">visit_jump_if_true_or_pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_abs</span><span class="p">):</span> <span class="c"># jabs</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_jump_absolute"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_jump_absolute">[docs]</a>  <span class="k">def</span> <span class="nf">visit_jump_absolute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_abs</span><span class="p">):</span> <span class="c"># jabs</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_pop_jump_if_false"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_pop_jump_if_false">[docs]</a>  <span class="k">def</span> <span class="nf">visit_pop_jump_if_false</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_abs</span><span class="p">):</span> <span class="c"># jabs</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_pop_jump_if_true"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_pop_jump_if_true">[docs]</a>  <span class="k">def</span> <span class="nf">visit_pop_jump_if_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_abs</span><span class="p">):</span> <span class="c"># jabs</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_load_global"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_load_global">[docs]</a>  <span class="k">def</span> <span class="nf">visit_load_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="c"># name_op</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_continue_loop"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_continue_loop">[docs]</a>  <span class="k">def</span> <span class="nf">visit_continue_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_abs</span><span class="p">):</span> <span class="c"># jabs</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_setup_loop"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_setup_loop">[docs]</a>  <span class="k">def</span> <span class="nf">visit_setup_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_rel</span><span class="p">):</span> <span class="c"># jrel</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_setup_except"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_setup_except">[docs]</a>  <span class="k">def</span> <span class="nf">visit_setup_except</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_rel</span><span class="p">):</span> <span class="c"># jrel</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_setup_finally"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_setup_finally">[docs]</a>  <span class="k">def</span> <span class="nf">visit_setup_finally</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_rel</span><span class="p">):</span> <span class="c"># jrel</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_load_fast"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_load_fast">[docs]</a>  <span class="k">def</span> <span class="nf">visit_load_fast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local</span><span class="p">):</span> <span class="c"># haslocal</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_fast"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_fast">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_fast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local</span><span class="p">):</span> <span class="c"># haslocal</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_delete_fast"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_delete_fast">[docs]</a>  <span class="k">def</span> <span class="nf">visit_delete_fast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local</span><span class="p">):</span> <span class="c"># haslocal</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_raise_varargs"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_raise_varargs">[docs]</a>  <span class="k">def</span> <span class="nf">visit_raise_varargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_call_function"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_call_function">[docs]</a>  <span class="k">def</span> <span class="nf">visit_call_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_make_function"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_make_function">[docs]</a>  <span class="k">def</span> <span class="nf">visit_make_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_build_slice"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_build_slice">[docs]</a>  <span class="k">def</span> <span class="nf">visit_build_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_make_closure"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_make_closure">[docs]</a>  <span class="k">def</span> <span class="nf">visit_make_closure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_load_closure"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_load_closure">[docs]</a>  <span class="k">def</span> <span class="nf">visit_load_closure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">free</span><span class="p">):</span> <span class="c"># hasfree</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_load_deref"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_load_deref">[docs]</a>  <span class="k">def</span> <span class="nf">visit_load_deref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">free</span><span class="p">):</span> <span class="c"># hasfree</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_store_deref"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_store_deref">[docs]</a>  <span class="k">def</span> <span class="nf">visit_store_deref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">free</span><span class="p">):</span> <span class="c"># hasfree</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_call_function_var"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_call_function_var">[docs]</a>  <span class="k">def</span> <span class="nf">visit_call_function_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_call_function_kw"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_call_function_kw">[docs]</a>  <span class="k">def</span> <span class="nf">visit_call_function_kw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_call_function_var_kw"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_call_function_var_kw">[docs]</a>  <span class="k">def</span> <span class="nf">visit_call_function_var_kw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_setup_with"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_setup_with">[docs]</a>  <span class="k">def</span> <span class="nf">visit_setup_with</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jump_rel</span><span class="p">):</span> <span class="c"># jrel</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_extended_arg"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_extended_arg">[docs]</a>  <span class="k">def</span> <span class="nf">visit_extended_arg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_set_add"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_set_add">[docs]</a>  <span class="k">def</span> <span class="nf">visit_set_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BytecodeVisitor.visit_map_add"><a class="viewcode-back" href="../../../equip.visitors.html#equip.visitors.bytecode.BytecodeVisitor.visit_map_add">[docs]</a>  <span class="k">def</span> <span class="nf">visit_map_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">pass</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Romain Gaucher.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

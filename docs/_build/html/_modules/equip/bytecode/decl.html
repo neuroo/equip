@@ -1,0 +1,607 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>equip.bytecode.decl &mdash; equip 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="equip 0.1 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../index.html" class="fa fa-home"> equip</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#current-limitations">Current Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#virtualenv">virtualenv</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gettingstarted.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#instrument">Instrument</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#visitors">Visitors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#simplerewriter">SimpleRewriter</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../equip.html">equip package</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">equip</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>equip.bytecode.decl</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for equip.bytecode.decl</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">  equip.bytecode.decl</span>
+<span class="sd">  ~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">  Structured representation of Module, Types, Method, Imports.</span>
+
+<span class="sd">  :copyright: (c) 2014 by Romain Gaucher (@rgaucher)</span>
+<span class="sd">  :license: Apache 2, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">dis</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">attrgetter</span><span class="p">,</span> \
+                     <span class="n">methodcaller</span>
+
+<span class="kn">from</span> <span class="nn">..utils.log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..visitors.bytecode</span> <span class="kn">import</span> <span class="n">BytecodeVisitor</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">update_nested_code_object</span>
+
+
+<div class="viewcode-block" id="Declaration"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration">[docs]</a><span class="k">class</span> <span class="nc">Declaration</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for the declaration types of object.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">MODULE</span> <span class="o">=</span> <span class="mi">1</span>
+  <span class="n">TYPE</span> <span class="o">=</span> <span class="mi">2</span>
+  <span class="n">METHOD</span> <span class="o">=</span> <span class="mi">3</span>
+  <span class="n">FIELD</span> <span class="o">=</span> <span class="mi">4</span>
+  <span class="n">IMPORT</span> <span class="o">=</span> <span class="mi">5</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">_code_object</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span> <span class="o">=</span> <span class="n">kind</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_code_object</span> <span class="o">=</span> <span class="n">_code_object</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_lines</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_bytecode</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_bytecode_object</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_has_changes</span> <span class="o">=</span> <span class="bp">False</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">lines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      A tuple of start/end line numbers that encapsulates this declaration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lines</span>
+
+  <span class="nd">@lines.setter</span>
+<div class="viewcode-block" id="Declaration.lines"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.lines">[docs]</a>  <span class="k">def</span> <span class="nf">lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_lines</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="Declaration.start_lineno"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.start_lineno">[docs]</a>  <span class="k">def</span> <span class="nf">start_lineno</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns the start line number of the declaration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lines</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="Declaration.get_start_lineno"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.get_start_lineno">[docs]</a>  <span class="k">def</span> <span class="nf">get_start_lineno</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_lineno</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="Declaration.end_lineno"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.end_lineno">[docs]</a>  <span class="k">def</span> <span class="nf">end_lineno</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns the end line number of the declaration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lines</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lines</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+</div>
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">parent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns the parent of this declaration or ``None`` if there is</span>
+<span class="sd">      no parent (e.g., for a ``ModuleDeclaration``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span>
+
+  <span class="nd">@parent.setter</span>
+<div class="viewcode-block" id="Declaration.parent"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.parent">[docs]</a>  <span class="k">def</span> <span class="nf">parent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Set parent. </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="Declaration.children"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.children">[docs]</a>  <span class="k">def</span> <span class="nf">children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns the children of this declaration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span>
+</div>
+<div class="viewcode-block" id="Declaration.add_child"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.add_child">[docs]</a>  <span class="k">def</span> <span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Adds a child to this declaration.</span>
+
+<span class="sd">      :param child: A ``Declaration`` that is a child of the current declaration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;add_child:: Children: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+    <span class="c"># Keep sorting by line number</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">methodcaller</span><span class="p">(</span><span class="s">&#39;get_start_lineno&#39;</span><span class="p">))</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="Declaration.parent_module"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.parent_module">[docs]</a>  <span class="k">def</span> <span class="nf">parent_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns the parent module (a ``ModuleDeclaration``) for this declaration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_parent_kind</span><span class="p">(</span><span class="n">ModuleDeclaration</span><span class="p">)</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="Declaration.parent_class"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.parent_class">[docs]</a>  <span class="k">def</span> <span class="nf">parent_class</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns the parent class (a ``TypeDeclaration``) for this declaration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_parent_kind</span><span class="p">(</span><span class="n">TypeDeclaration</span><span class="p">)</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="Declaration.parent_method"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.parent_method">[docs]</a>  <span class="k">def</span> <span class="nf">parent_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns the parent method (a ``MethodDeclaration``) for this declaration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_parent_kind</span><span class="p">(</span><span class="n">MethodDeclaration</span><span class="p">)</span>
+</div>
+  <span class="k">def</span> <span class="nf">__get_parent_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">while</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">p</span>
+      <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">return</span> <span class="bp">None</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">bytecode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns the bytecode associated with this declaration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bytecode</span>
+
+  <span class="nd">@bytecode.setter</span>
+<div class="viewcode-block" id="Declaration.bytecode"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.bytecode">[docs]</a>  <span class="k">def</span> <span class="nf">bytecode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_bytecode</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">code_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_code_object</span>
+
+  <span class="nd">@code_object.setter</span>
+<div class="viewcode-block" id="Declaration.code_object"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.code_object">[docs]</a>  <span class="k">def</span> <span class="nf">code_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_code_object</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+<div class="viewcode-block" id="Declaration.update_nested_code_object"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.update_nested_code_object">[docs]</a>  <span class="k">def</span> <span class="nf">update_nested_code_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original_co</span><span class="p">,</span> <span class="n">new_co</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_code_object</span> <span class="o">=</span> <span class="n">update_nested_code_object</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_code_object</span><span class="p">,</span>
+                                                  <span class="n">original_co</span><span class="p">,</span>
+                                                  <span class="n">new_co</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_has_changes</span> <span class="o">=</span> <span class="bp">True</span>
+</div>
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">has_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_changes</span>
+
+  <span class="nd">@has_changes.setter</span>
+<div class="viewcode-block" id="Declaration.has_changes"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.has_changes">[docs]</a>  <span class="k">def</span> <span class="nf">has_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_has_changes</span> <span class="o">=</span> <span class="n">value</span>
+
+  <span class="c"># Mostly reserved</span></div>
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">bytecode_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bytecode_object</span>
+
+  <span class="nd">@bytecode_object.setter</span>
+<div class="viewcode-block" id="Declaration.bytecode_object"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.bytecode_object">[docs]</a>  <span class="k">def</span> <span class="nf">bytecode_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_bytecode_object</span> <span class="o">=</span> <span class="n">value</span>
+
+</div>
+<div class="viewcode-block" id="Declaration.accept"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.accept">[docs]</a>  <span class="k">def</span> <span class="nf">accept</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">visitor</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">visitor</span><span class="p">,</span> <span class="n">BytecodeVisitor</span><span class="p">):</span>
+      <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bytecode</span><span class="p">)):</span>
+        <span class="n">index</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">cflow_in</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bytecode</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">visitor</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="o">=</span><span class="n">arg</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=</span><span class="n">lineno</span><span class="p">,</span> <span class="n">cflow_in</span><span class="o">=</span><span class="n">cflow_in</span><span class="p">)</span>
+
+</div>
+  <span class="n">is_module</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">MODULE</span>
+  <span class="n">is_type</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">TYPE</span>
+  <span class="n">is_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">METHOD</span>
+  <span class="n">is_field</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">FIELD</span>
+  <span class="n">is_import</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">IMPORT</span>
+
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="Declaration.kind"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.Declaration.kind">[docs]</a>  <span class="k">def</span> <span class="nf">kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span>
+
+
+</div></div>
+<div class="viewcode-block" id="ImportDeclaration"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ImportDeclaration">[docs]</a><span class="k">class</span> <span class="nc">ImportDeclaration</span><span class="p">(</span><span class="n">Declaration</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Models an import statement. It handles relatives/absolute</span>
+<span class="sd">    imports, as well as aliases.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code_object</span><span class="p">):</span>
+    <span class="n">Declaration</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">IMPORT</span><span class="p">,</span> <span class="n">code_object</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_live_names</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_dots</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_star</span> <span class="o">=</span> <span class="bp">False</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">star</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_star</span>
+
+  <span class="nd">@star.setter</span>
+<div class="viewcode-block" id="ImportDeclaration.star"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ImportDeclaration.star">[docs]</a>  <span class="k">def</span> <span class="nf">star</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_star</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">aliases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span>
+
+  <span class="nd">@aliases.setter</span>
+<div class="viewcode-block" id="ImportDeclaration.aliases"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ImportDeclaration.aliases">[docs]</a>  <span class="k">def</span> <span class="nf">aliases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_aliases</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="ImportDeclaration.live_names"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ImportDeclaration.live_names">[docs]</a>  <span class="k">def</span> <span class="nf">live_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_names</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_live_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+      <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">alias</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aliases</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">alias</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+          <span class="k">if</span> <span class="s">&#39;.&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_live_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+          <span class="k">else</span><span class="p">:</span>
+            <span class="n">live_name</span> <span class="o">=</span> <span class="n">name</span><span class="p">[:</span><span class="n">name</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_live_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">live_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">_live_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">alias</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_names</span>
+</div>
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">dots</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dots</span>
+
+  <span class="nd">@dots.setter</span>
+<div class="viewcode-block" id="ImportDeclaration.dots"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ImportDeclaration.dots">[docs]</a>  <span class="k">def</span> <span class="nf">dots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_dots</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span>
+
+  <span class="nd">@root.setter</span>
+<div class="viewcode-block" id="ImportDeclaration.root"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ImportDeclaration.root">[docs]</a>  <span class="k">def</span> <span class="nf">root</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+  <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">==</span> <span class="n">obj</span><span class="o">.</span><span class="n">root</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">aliases</span> <span class="o">==</span> <span class="n">obj</span><span class="o">.</span><span class="n">aliases</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">dots</span> <span class="o">==</span> <span class="n">obj</span><span class="o">.</span><span class="n">dots</span>
+
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">skip_import_root</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">import_buffer</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dots</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="n">import_buffer</span> <span class="o">+=</span> <span class="s">&#39;from &#39;</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dots</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
+        <span class="n">import_buffer</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
+        <span class="n">skip_import_root</span> <span class="o">=</span> <span class="bp">True</span>
+      <span class="n">import_buffer</span> <span class="o">+=</span> <span class="s">&#39; import &#39;</span>
+
+    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
+      <span class="n">import_buffer</span> <span class="o">+=</span> <span class="s">&#39;from &#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">import_buffer</span> <span class="o">+=</span> <span class="s">&#39;import &#39;</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip_import_root</span><span class="p">:</span>
+      <span class="n">import_buffer</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">+</span> <span class="s">&#39; import &#39;</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">star</span><span class="p">:</span>
+      <span class="n">import_buffer</span> <span class="o">+=</span> <span class="s">&#39;*&#39;</span>
+
+    <span class="n">import_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">aliased_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aliases</span><span class="p">:</span>
+      <span class="n">local_import</span> <span class="o">=</span> <span class="n">aliased_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">aliased_name</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">local_import</span> <span class="o">+=</span> <span class="s">&#39; as &#39;</span> <span class="o">+</span> <span class="n">aliased_name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="n">import_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">local_import</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">import_list</span><span class="p">:</span>
+      <span class="n">import_buffer</span> <span class="o">+=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">import_list</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s">&#39;Import(</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="n">import_buffer</span>
+
+
+</div>
+<div class="viewcode-block" id="ModuleDeclaration"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ModuleDeclaration">[docs]</a><span class="k">class</span> <span class="nc">ModuleDeclaration</span><span class="p">(</span><span class="n">Declaration</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The module is the object that captures everything under one pyc file.</span>
+<span class="sd">    It contains nested classes and functions, as well as import statements.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_path</span><span class="p">,</span> <span class="n">code_object</span><span class="p">):</span>
+    <span class="n">Declaration</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">MODULE</span><span class="p">,</span> <span class="n">code_object</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_module_path</span> <span class="o">=</span> <span class="n">module_path</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_imports</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_functions</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="ModuleDeclaration.add_import"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ModuleDeclaration.add_import">[docs]</a>  <span class="k">def</span> <span class="nf">add_import</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">importDecl</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">importDecl</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imports</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_imports</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">importDecl</span><span class="p">)</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="ModuleDeclaration.imports"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ModuleDeclaration.imports">[docs]</a>  <span class="k">def</span> <span class="nf">imports</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_imports</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="ModuleDeclaration.module_path"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ModuleDeclaration.module_path">[docs]</a>  <span class="k">def</span> <span class="nf">module_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_path</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="ModuleDeclaration.classes"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ModuleDeclaration.classes">[docs]</a>  <span class="k">def</span> <span class="nf">classes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span> <span class="o">=</span> <span class="p">[</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">is_type</span><span class="p">()</span> <span class="p">]</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="ModuleDeclaration.functions"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.ModuleDeclaration.functions">[docs]</a>  <span class="k">def</span> <span class="nf">functions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_functions</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_functions</span> <span class="o">=</span> <span class="p">[</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">is_method</span><span class="p">()</span> <span class="p">]</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_functions</span>
+</div>
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&#39;ModuleDeclaration(path=</span><span class="si">%s</span><span class="s">, co=</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">code_object</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="TypeDeclaration"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.TypeDeclaration">[docs]</a><span class="k">class</span> <span class="nc">TypeDeclaration</span><span class="p">(</span><span class="n">Declaration</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represent a class declaration. It has a name, as well as a hierarchy</span>
+<span class="sd">    (superclass). The type contains several methods and fields, and can</span>
+<span class="sd">    have nested types.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">,</span> <span class="n">code_object</span><span class="p">):</span>
+    <span class="n">Declaration</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">TYPE</span><span class="p">,</span> <span class="n">code_object</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_type_name</span> <span class="o">=</span> <span class="n">type_name</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_superclasses</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_methods</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_fields</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_nested_types</span> <span class="o">=</span> <span class="bp">None</span>
+
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="TypeDeclaration.type_name"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.TypeDeclaration.type_name">[docs]</a>  <span class="k">def</span> <span class="nf">type_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns the name of the type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type_name</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="TypeDeclaration.superclasses"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.TypeDeclaration.superclasses">[docs]</a>  <span class="k">def</span> <span class="nf">superclasses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_superclasses</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="TypeDeclaration.methods"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.TypeDeclaration.methods">[docs]</a>  <span class="k">def</span> <span class="nf">methods</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns a list of ``MethodDeclaration`` that belong to this type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_methods</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_methods</span> <span class="o">=</span> <span class="p">[</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">is_method</span><span class="p">()</span> <span class="p">]</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_methods</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="TypeDeclaration.fields"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.TypeDeclaration.fields">[docs]</a>  <span class="k">def</span> <span class="nf">fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="TypeDeclaration.nested_types"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.TypeDeclaration.nested_types">[docs]</a>  <span class="k">def</span> <span class="nf">nested_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Returns a list of ``TypeDeclaration`` that belong to this type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nested_types</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_nested_types</span> <span class="o">=</span> <span class="p">[</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">is_type</span><span class="p">()</span> <span class="p">]</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nested_types</span>
+</div>
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&#39;TypeDeclaration#</span><span class="si">%d</span><span class="s">(name=</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_lineno</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_name</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="MethodDeclaration"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.MethodDeclaration">[docs]</a><span class="k">class</span> <span class="nc">MethodDeclaration</span><span class="p">(</span><span class="n">Declaration</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The declaration of a method or a function.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">code_object</span><span class="p">):</span>
+    <span class="n">Declaration</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">METHOD</span><span class="p">,</span> <span class="n">code_object</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_method_name</span> <span class="o">=</span> <span class="n">method_name</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_formal_parameters</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_body</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_labels</span> <span class="o">=</span> <span class="n">dis</span><span class="o">.</span><span class="n">findlabels</span><span class="p">(</span><span class="n">code_object</span><span class="o">.</span><span class="n">co_code</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_nested_types</span> <span class="o">=</span> <span class="p">[]</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_body</span>
+
+  <span class="nd">@body.setter</span>
+<div class="viewcode-block" id="MethodDeclaration.body"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.MethodDeclaration.body">[docs]</a>  <span class="k">def</span> <span class="nf">body</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_body</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="MethodDeclaration.labels"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.MethodDeclaration.labels">[docs]</a>  <span class="k">def</span> <span class="nf">labels</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_labels</span>
+</div>
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">formal_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_formal_parameters</span>
+
+  <span class="nd">@formal_parameters.setter</span>
+<div class="viewcode-block" id="MethodDeclaration.formal_parameters"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.MethodDeclaration.formal_parameters">[docs]</a>  <span class="k">def</span> <span class="nf">formal_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_formal_parameters</span> <span class="o">=</span> <span class="n">value</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="MethodDeclaration.method_name"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.MethodDeclaration.method_name">[docs]</a>  <span class="k">def</span> <span class="nf">method_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method_name</span>
+</div>
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="MethodDeclaration.nested_types"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.MethodDeclaration.nested_types">[docs]</a>  <span class="k">def</span> <span class="nf">nested_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nested_types</span>
+</div>
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&#39;MethodDeclaration#</span><span class="si">%d</span><span class="s">(name=</span><span class="si">%s</span><span class="s">, args=</span><span class="si">%s</span><span class="s">)&#39;</span> \
+           <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_lineno</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">formal_params</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="FieldDeclaration"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.FieldDeclaration">[docs]</a><span class="k">class</span> <span class="nc">FieldDeclaration</span><span class="p">(</span><span class="n">Declaration</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">code_object</span><span class="p">):</span>
+    <span class="n">Declaration</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Declaration</span><span class="o">.</span><span class="n">FIELD</span><span class="p">,</span> <span class="n">code_object</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_field_name</span> <span class="o">=</span> <span class="n">field_name</span>
+
+  <span class="nd">@property</span>
+<div class="viewcode-block" id="FieldDeclaration.field_name"><a class="viewcode-back" href="../../../equip.bytecode.html#equip.bytecode.decl.FieldDeclaration.field_name">[docs]</a>  <span class="k">def</span> <span class="nf">field_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_name</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Romain Gaucher.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

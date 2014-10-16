@@ -1,0 +1,834 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>equip.rewriter.merger &mdash; equip 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="equip 0.1 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../index.html" class="fa fa-home"> equip</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#current-limitations">Current Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#virtualenv">virtualenv</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gettingstarted.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#instrument">Instrument</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#visitors">Visitors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#simplerewriter">SimpleRewriter</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../equip.html">equip package</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">equip</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>equip.rewriter.merger</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for equip.rewriter.merger</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">  equip.rewriter.merger</span>
+<span class="sd">  ~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">  Responsible for merging two bytecodes at the specified places,</span>
+<span class="sd">  as well as making sure the resulting bytecode (and code_object)</span>
+<span class="sd">  is properly created.</span>
+
+<span class="sd">  :copyright: (c) 2014 by Romain Gaucher (@rgaucher)</span>
+<span class="sd">  :license: Apache 2, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">opcode</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">dis</span> <span class="kn">import</span> <span class="n">findlinestarts</span>
+<span class="kn">from</span> <span class="nn">array</span> <span class="kn">import</span> <span class="n">array</span>
+
+<span class="kn">from</span> <span class="nn">..utils.log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..bytecode.code</span> <span class="kn">import</span> <span class="n">BytecodeObject</span>
+<span class="kn">from</span> <span class="nn">..bytecode.utils</span> <span class="kn">import</span> <span class="n">get_debug_code_object_dict</span><span class="p">,</span> \
+                             <span class="n">get_debug_code_object_info</span><span class="p">,</span> \
+                             <span class="n">show_bytecode</span><span class="p">,</span> \
+                             <span class="n">CO_FIELDS</span>
+
+<span class="n">PLACEHOLDER</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span>
+<span class="n">RETURN_VALUE</span> <span class="o">=</span> <span class="mi">83</span>
+<span class="n">LOAD_NAME</span> <span class="o">=</span> <span class="mi">101</span>
+<span class="n">LOAD_GLOBAL</span> <span class="o">=</span> <span class="mi">116</span>
+<span class="n">LOAD_FAST</span> <span class="o">=</span> <span class="mi">124</span>
+<span class="n">STORE_FAST</span> <span class="o">=</span> <span class="mi">125</span>
+
+
+<span class="c">#: This global name is always injected as a new variable in ``co_varnames``,</span>
+<span class="c">#: and used to carry the return values. We essentially add::</span>
+<span class="c">#:</span>
+<span class="c">#:   STORE_FAST &#39;_______0x42024_retvalue&#39;</span>
+<span class="c">#:   ... instrument code that can use `{return_value}`</span>
+<span class="c">#:   LOAD_FAST  &#39;_______0x42024_retvalue&#39;</span>
+<span class="c">#:   RETURN_VALUE</span>
+<span class="c">#:</span>
+<span class="c">#: as specified by the ``RETURN_INSTR_TEMPLATE``.</span>
+<span class="n">RETURN_CANARY_NAME</span> <span class="o">=</span> <span class="s">&#39;_______0x42024_retvalue&#39;</span> <span class="c"># yeah...</span>
+
+
+<span class="c">#: The template that dictates how return values are being captured.</span>
+<span class="n">RETURN_INSTR_TEMPLATE</span> <span class="o">=</span> <span class="p">(</span>
+  <span class="p">(</span><span class="n">STORE_FAST</span><span class="p">,</span> <span class="n">RETURN_CANARY_NAME</span><span class="p">),</span>
+  <span class="p">(</span><span class="n">PLACEHOLDER</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>             <span class="c"># &lt;---- actual return instrumentation code</span>
+  <span class="p">(</span><span class="n">LOAD_FAST</span><span class="p">,</span> <span class="n">RETURN_CANARY_NAME</span><span class="p">),</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="CodeObject"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject">[docs]</a><span class="k">class</span> <span class="nc">CodeObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class responsible for merging two code objects, and generating a new one.</span>
+<span class="sd">    This effectively creates the new bytecode that will be executed.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">co_origin</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">co_origin</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">CodeType</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;The creation of the `CodeObject` should get the original code_object&#39;</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">co_origin</span> <span class="o">=</span> <span class="n">co_origin</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">CO_FIELDS</span><span class="p">,</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">co_origin</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">CO_FIELDS</span><span class="p">]))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="s">&#39;B&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">linestarts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">findlinestarts</span><span class="p">(</span><span class="n">co_origin</span><span class="p">))</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="s">&#39;B&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">append_code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">append</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">insert_code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">insert</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">prev_lineno</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="c"># Used for conversion from a LOAD_NAME in the probe code to a LOAD_FAST</span>
+    <span class="c"># in the final bytecode if the names are variable names (in co_varnames)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">name_to_fast</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="c"># Used for conversion from a LOAD_NAME in the probe code to a LOAD_GLOBAL</span>
+    <span class="c"># when the name is from an injected import</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">name_to_global</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="CodeObject.add_global_name"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.add_global_name">[docs]</a>  <span class="k">def</span> <span class="nf">add_global_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">global_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Adds the ``global_name`` as a known imported name. The instrument bytecode</span>
+<span class="sd">      will get modified to change any LOAD_* to a LOAD_GLOBAL when finding this</span>
+<span class="sd">      name.</span>
+
+<span class="sd">      :param global_name: The imported global name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">name_to_global</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">global_name</span><span class="p">)</span>
+
+
+  <span class="c">#: List of fields in the code_object not to merge. We only keep the ones from</span>
+  <span class="c">#: the original code_object.</span></div>
+  <span class="n">MERGE_BACKLIST</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;co_code&#39;</span><span class="p">,</span> <span class="s">&#39;co_firstlineno&#39;</span><span class="p">,</span> <span class="s">&#39;co_name&#39;</span><span class="p">,</span> <span class="s">&#39;co_filename&#39;</span><span class="p">,</span>
+                    <span class="s">&#39;co_lnotab&#39;</span><span class="p">,</span> <span class="s">&#39;co_flags&#39;</span><span class="p">,</span> <span class="s">&#39;co_argcount&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CodeObject.merge_fields"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.merge_fields">[docs]</a>  <span class="k">def</span> <span class="nf">merge_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">co_other</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Merges fields from the code_object. The only fields that aren&#39;t merged,</span>
+<span class="sd">      are listed in `MERGE_BACKLIST`.</span>
+
+<span class="sd">      :param co_other: The other code_object to merge the `co_origin` with.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">CO_FIELDS</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">CodeObject</span><span class="o">.</span><span class="n">MERGE_BACKLIST</span><span class="p">:</span>
+        <span class="k">continue</span>
+      <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s">&#39;co_stacksize&#39;</span><span class="p">:</span>
+        <span class="c"># We don&#39;t recompute the required stacksize, but just get the max from</span>
+        <span class="c"># the two code_objects</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_stacksize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_stacksize&#39;</span><span class="p">],</span>
+                                          <span class="nb">getattr</span><span class="p">(</span><span class="n">co_other</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+      <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s">&#39;co_nlocals&#39;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_nlocals&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_nlocals&#39;</span><span class="p">]</span> \
+                                  <span class="o">+</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">co_other</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>      \
+                                  <span class="o">+</span> <span class="mi">1</span> <span class="c"># for the return value `RETURN_CANARY_NAME`</span>
+      <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s">&#39;co_names&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">co_name</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">co_other</span><span class="p">,</span> <span class="s">&#39;co_names&#39;</span><span class="p">):</span>
+          <span class="k">if</span> <span class="n">co_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_varnames&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_names&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_names&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">co_name</span><span class="p">,)</span>
+          <span class="k">else</span><span class="p">:</span>
+            <span class="c"># self.fields[&#39;co_varnames&#39;] = self.fields[&#39;co_varnames&#39;] + (co_name,)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name_to_fast</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">co_name</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="c"># Should only be tuples</span>
+        <span class="n">tpl_other</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">co_other</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="c"># We need to keep the ordering, as it matters for the formal parameters</span>
+        <span class="c"># which are the first...</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">tpl_other</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">val</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">val</span><span class="p">,)</span>
+
+        <span class="k">if</span> <span class="n">f</span> <span class="o">==</span> <span class="s">&#39;co_varnames&#39;</span> <span class="ow">and</span> <span class="n">RETURN_CANARY_NAME</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="p">]:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">RETURN_CANARY_NAME</span><span class="p">,)</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.reset_code"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.reset_code">[docs]</a>  <span class="k">def</span> <span class="nf">reset_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="s">&#39;B&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="s">&#39;B&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">append_code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">append</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">insert_code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">insert</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.append"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.append">[docs]</a>  <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">bc_index</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">bc_index</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.prepend"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.prepend">[docs]</a>  <span class="k">def</span> <span class="nf">prepend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">bc_index</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">bc_index</span><span class="p">)</span>
+
+
+  <span class="c"># Convert the `arg` into the right insertion and an oparg to burn in the code</span></div>
+<div class="viewcode-block" id="CodeObject.insert"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.insert">[docs]</a>  <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">bc_index</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">op</span><span class="p">,</span> <span class="n">oparg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_op_oparg</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">bc_index</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">oparg</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.get_op_oparg"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.get_op_oparg">[docs]</a>  <span class="k">def</span> <span class="nf">get_op_oparg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">bc_index</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Retrieve the opcode (`op`) and its argument (`oparg`) from the supplied</span>
+<span class="sd">      opcode and argument.</span>
+
+<span class="sd">      :param op: The current opcode.</span>
+<span class="sd">      :param arg: The current dereferenced argument.</span>
+<span class="sd">      :param bc_index: The current bytecode index.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Conversion of LOAD_NAME opcode based on injected references (global, vars)</span>
+    <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="n">LOAD_NAME</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">name_to_fast</span><span class="p">:</span>
+        <span class="n">op</span> <span class="o">=</span> <span class="n">LOAD_FAST</span>
+      <span class="k">elif</span> <span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">name_to_global</span><span class="p">:</span>
+        <span class="n">op</span> <span class="o">=</span> <span class="n">LOAD_GLOBAL</span>
+
+    <span class="n">oparg</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">op</span> <span class="o">&gt;=</span> <span class="n">opcode</span><span class="o">.</span><span class="n">HAVE_ARGUMENT</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasconst</span><span class="p">:</span>
+        <span class="n">oparg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_get_constant</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasname</span><span class="p">:</span>
+        <span class="n">oparg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_get_names</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">haslocal</span><span class="p">:</span>
+        <span class="n">oparg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_get_varnames</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hascompare</span><span class="p">:</span>
+        <span class="n">oparg</span> <span class="o">=</span> <span class="n">opcode</span><span class="o">.</span><span class="n">cmp_op</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasfree</span><span class="p">:</span>
+        <span class="n">oparg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_get_cellvars_freevars</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjrel</span> <span class="ow">or</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjabs</span><span class="p">:</span>
+        <span class="n">oparg</span> <span class="o">=</span> <span class="n">arg</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">oparg</span> <span class="o">=</span> <span class="n">arg</span>
+    <span class="k">return</span> <span class="n">op</span><span class="p">,</span> <span class="n">oparg</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.emit"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.emit">[docs]</a>  <span class="k">def</span> <span class="nf">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">oparg</span><span class="p">,</span> <span class="n">arg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Writes the bytecode and lnotab.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bytecode_inc</span><span class="p">,</span> <span class="n">line_inc</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">op</span> <span class="o">&gt;=</span> <span class="n">opcode</span><span class="o">.</span><span class="n">HAVE_ARGUMENT</span> <span class="ow">and</span> <span class="n">oparg</span> <span class="o">&gt;</span> <span class="mh">0xffff</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">append_code</span><span class="p">(</span><span class="n">opcode</span><span class="o">.</span><span class="n">EXTENDED_ARG</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">append_code</span><span class="p">((</span><span class="n">oparg</span> <span class="o">&gt;&gt;</span> <span class="mi">16</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">append_code</span><span class="p">((</span><span class="n">oparg</span> <span class="o">&gt;&gt;</span> <span class="mi">24</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span>
+      <span class="n">bytecode_inc</span> <span class="o">+=</span> <span class="mi">3</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">append_code</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+    <span class="n">bytecode_inc</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">op</span> <span class="o">&gt;=</span> <span class="n">opcode</span><span class="o">.</span><span class="n">HAVE_ARGUMENT</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">append_code</span><span class="p">(</span><span class="n">oparg</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">append_code</span><span class="p">((</span><span class="n">oparg</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span>
+      <span class="n">bytecode_inc</span> <span class="o">+=</span> <span class="mi">2</span>
+
+    <span class="c"># We also adjust the lnotabs field</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prev_lineno</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+      <span class="n">line_inc</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">line_inc</span> <span class="o">=</span> <span class="n">lineno</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">prev_lineno</span>
+
+    <span class="k">if</span> <span class="n">line_inc</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">bytecode_inc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c"># bytecode increment</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c"># lineno increment</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">while</span> <span class="n">bytecode_inc</span> <span class="o">&gt;</span> <span class="mi">255</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">bytecode_inc</span> <span class="o">-=</span> <span class="mi">255</span>
+
+      <span class="k">while</span> <span class="n">line_inc</span> <span class="o">&gt;</span> <span class="mi">255</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span>
+        <span class="n">line_inc</span> <span class="o">-=</span> <span class="mi">255</span>
+
+      <span class="c"># Add the remainder</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bytecode_inc</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line_inc</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">prev_lineno</span> <span class="o">=</span> <span class="n">lineno</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.get_instruction_size"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.get_instruction_size">[docs]</a>  <span class="k">def</span> <span class="nf">get_instruction_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bc_index</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">op</span><span class="p">,</span> <span class="n">oparg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_op_oparg</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">bc_index</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">op</span> <span class="o">&lt;</span> <span class="n">opcode</span><span class="o">.</span><span class="n">HAVE_ARGUMENT</span><span class="p">:</span>
+      <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">oparg</span> <span class="o">&gt;</span> <span class="mh">0xffff</span><span class="p">:</span>
+      <span class="k">return</span> <span class="mi">5</span>
+    <span class="k">return</span> <span class="mi">3</span>
+
+</div>
+  <span class="n">JUMP_OP</span> <span class="o">=</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjrel</span> <span class="o">+</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjabs</span>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="CodeObject.is_jump_op"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.is_jump_op">[docs]</a>  <span class="k">def</span> <span class="nf">is_jump_op</span><span class="p">(</span><span class="n">op</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">CodeObject</span><span class="o">.</span><span class="n">JUMP_OP</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.add_get_constant"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.add_get_constant">[docs]</a>  <span class="k">def</span> <span class="nf">add_get_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">const</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_get_tuple</span><span class="p">(</span><span class="n">const</span><span class="p">,</span> <span class="s">&#39;co_consts&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.add_get_names"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.add_get_names">[docs]</a>  <span class="k">def</span> <span class="nf">add_get_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_get_tuple</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;co_names&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.add_get_varnames"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.add_get_varnames">[docs]</a>  <span class="k">def</span> <span class="nf">add_get_varnames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">const</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_get_tuple</span><span class="p">(</span><span class="n">const</span><span class="p">,</span> <span class="s">&#39;co_varnames&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="CodeObject.add_get_cellvars_freevars"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.add_get_cellvars_freevars">[docs]</a>  <span class="k">def</span> <span class="nf">add_get_cellvars_freevars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">varname</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">varname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_cellvars&#39;</span><span class="p">]:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_cellvars&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">varname</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">varname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_freevars&#39;</span><span class="p">]:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_freevars&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">varname</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_get_tuple</span><span class="p">(</span><span class="n">varname</span><span class="p">,</span> <span class="s">&#39;co_freevars&#39;</span><span class="p">)</span>
+
+  <span class="c"># This is now just a getter since all fields have been merged already</span></div>
+<div class="viewcode-block" id="CodeObject.add_get_tuple"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.add_get_tuple">[docs]</a>  <span class="k">def</span> <span class="nf">add_get_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">field_name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+  <span class="c"># Create a new code_object with the info from this class</span></div>
+<div class="viewcode-block" id="CodeObject.to_code"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.CodeObject.to_code">[docs]</a>  <span class="k">def</span> <span class="nf">to_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">types</span><span class="o">.</span><span class="n">CodeType</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_argcount&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_nlocals&#39;</span><span class="p">],</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_stacksize&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_flags&#39;</span><span class="p">],</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">tostring</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_consts&#39;</span><span class="p">],</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_names&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_varnames&#39;</span><span class="p">],</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_filename&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_name&#39;</span><span class="p">],</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_firstlineno&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">lnotab</span><span class="o">.</span><span class="n">tostring</span><span class="p">(),</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_freevars&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s">&#39;co_cellvars&#39;</span><span class="p">])</span>
+
+</div></div>
+<div class="viewcode-block" id="Merger"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.Merger">[docs]</a><span class="k">class</span> <span class="nc">Merger</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="c">#: Error case for the kind of location for the merge.</span>
+  <span class="n">UNKNOWN</span> <span class="o">=</span> <span class="mi">0</span>
+
+  <span class="c">#: Only valid for ``MethodDeclaration``. This specifies that the instrument</span>
+  <span class="c">#: code should be injected before the body.</span>
+  <span class="n">BEFORE</span> <span class="o">=</span> <span class="mi">1</span>
+
+  <span class="c">#: Only valid for ``MethodDeclaration``. This specifies that the instrument</span>
+  <span class="c">#: code should be injected before each return of the method (i.e., before</span>
+  <span class="c">#: each encountered ``RETURN_VALUE`` in the bytecode).</span>
+  <span class="n">AFTER</span> <span class="o">=</span> <span class="mi">2</span>
+
+  <span class="c">#: Valid for all ``Declaration``. This specifies that the instrument code</span>
+  <span class="c">#: should be injected each time the current line number changes.</span>
+  <span class="n">LINENO</span> <span class="o">=</span> <span class="mi">3</span>
+
+  <span class="c">#: Valid for all ``Declaration``. This specifies that the instrument code</span>
+  <span class="c">#: should be injected after each instrument.</span>
+  <span class="n">INSTRUCTION</span> <span class="o">=</span> <span class="mi">4</span>
+
+  <span class="c">#: Valid for ``ModuleDeclaration`` or ``MethodDeclaration``. This specifies that</span>
+  <span class="c">#: the instrument code should be injected before the encountered imports.</span>
+  <span class="n">BEFORE_IMPORTS</span> <span class="o">=</span> <span class="mi">5</span>
+
+  <span class="c">#: Valid for ``ModuleDeclaration`` or ``MethodDeclaration``. This specifies that</span>
+  <span class="c">#: the instrument code should be injected after the encountered imports.</span>
+  <span class="n">AFTER_IMPORTS</span> <span class="o">=</span> <span class="mi">6</span>
+
+  <span class="c">#: Unused.</span>
+  <span class="n">RETURN_VALUES</span> <span class="o">=</span> <span class="mi">7</span>
+
+  <span class="c">#: Valid for ``ModuleDeclaration``. This specifies that the code should be injected</span>
+  <span class="c">#: at the beginning of the module.</span>
+  <span class="n">MODULE_ENTER</span> <span class="o">=</span> <span class="mi">8</span>
+
+  <span class="c">#: Valid for ``ModuleDeclaration``. This specifies that the code should be injected</span>
+  <span class="c">#: at the end of the module.</span>
+  <span class="n">MODULE_EXIT</span> <span class="o">=</span> <span class="mi">9</span>
+
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Merger.merge"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.Merger.merge">[docs]</a>  <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">co_source</span><span class="p">,</span> <span class="n">co_input</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">UNKNOWN</span><span class="p">,</span> \
+            <span class="n">ins_lineno</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ins_offset</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ins_import_names</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      The merger makes sure that the bytecode is properly inserted where</span>
+<span class="sd">      it should be, but also that the consts/names/locals/etc. are re-indexed.</span>
+<span class="sd">      We will always append at the end of the current tuples.</span>
+
+<span class="sd">      We need to first compute the new bytecode resolve the jumps, and then dump it...</span>
+<span class="sd">      if we just emit it as right now, we have an issue since we cannot know where an</span>
+<span class="sd">      absolute/relative jump will land since some instr code can be inserted in between.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">co_input</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Input code_object is None&#39;</span><span class="p">)</span>
+
+    <span class="n">new_co</span> <span class="o">=</span> <span class="n">CodeObject</span><span class="p">(</span><span class="n">co_source</span><span class="p">)</span>
+    <span class="n">new_co</span><span class="o">.</span><span class="n">merge_fields</span><span class="p">(</span><span class="n">co_input</span><span class="p">)</span>
+    <span class="n">new_co</span><span class="o">.</span><span class="n">reset_code</span><span class="p">()</span>
+
+    <span class="n">bc_source</span> <span class="o">=</span> <span class="n">BytecodeObject</span><span class="o">.</span><span class="n">get_parsed_code</span><span class="p">(</span><span class="n">co_source</span><span class="p">)</span>
+    <span class="n">bc_input</span> <span class="o">=</span> <span class="n">BytecodeObject</span><span class="o">.</span><span class="n">get_parsed_code</span><span class="p">(</span><span class="n">co_input</span><span class="p">)[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="c"># logger.debug(&quot;ins_import_names := %s&quot;, ins_import_names)</span>
+
+    <span class="k">if</span> <span class="n">ins_import_names</span><span class="p">:</span>
+      <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ins_import_names</span><span class="p">:</span>
+        <span class="c"># logger.debug(&quot;Adding global name: %s&quot;, name)</span>
+        <span class="n">new_co</span><span class="o">.</span><span class="n">add_global_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="c"># logger.debug(&quot;Enter code_object:\n&quot; + get_debug_code_object_info(co_input))</span>
+    <span class="c"># logger.debug(&quot;Instrument bytecode:\n%s&quot;, show_bytecode(bc_input))</span>
+
+    <span class="n">new_bytecode</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">location</span> <span class="o">==</span> <span class="n">Merger</span><span class="o">.</span><span class="n">MODULE_EXIT</span><span class="p">:</span>
+      <span class="n">new_bytecode</span> <span class="o">=</span> <span class="n">Merger</span><span class="o">.</span><span class="n">merge_exit</span><span class="p">(</span><span class="n">new_co</span><span class="p">,</span> <span class="n">bc_source</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span> <span class="n">ins_import_names</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+
+      <span class="k">if</span> <span class="n">Merger</span><span class="o">.</span><span class="n">already_instrumented</span><span class="p">(</span><span class="n">bc_source</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Already instrumented code object. Skipping&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+      <span class="c"># list [(bc elements), instrument_code frame counter)]</span>
+      <span class="n">bytecode</span> <span class="o">=</span> <span class="n">Merger</span><span class="o">.</span><span class="n">get_final_bytecode</span><span class="p">(</span><span class="n">bc_source</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span>
+                                           <span class="n">co_source</span><span class="p">,</span> <span class="n">co_input</span><span class="p">,</span>
+                                           <span class="n">location</span><span class="p">,</span>
+                                           <span class="n">ins_lineno</span><span class="p">,</span> <span class="n">ins_offset</span><span class="p">)</span>
+
+      <span class="n">new_bytecode</span> <span class="o">=</span> <span class="n">Merger</span><span class="o">.</span><span class="n">resolve_jump_targets</span><span class="p">(</span><span class="n">bytecode</span><span class="p">,</span> <span class="n">new_co</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">bc_tpl</span> <span class="ow">in</span> <span class="n">new_bytecode</span><span class="p">:</span>
+      <span class="n">new_co</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">final_new_co</span> <span class="o">=</span> <span class="n">new_co</span><span class="o">.</span><span class="n">to_code</span><span class="p">()</span>
+
+    <span class="c"># logger.debug(&quot;New code_object:\n&quot; + get_debug_code_object_info(final_new_co))</span>
+    <span class="c"># final_bc = BytecodeObject.get_parsed_code(final_new_co)</span>
+    <span class="c"># logger.debug(&quot;New bytecode:\n&quot; + show_bytecode(final_bc))</span>
+
+    <span class="k">return</span> <span class="n">final_new_co</span>
+
+</div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Merger.merge_exit"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.Merger.merge_exit">[docs]</a>  <span class="k">def</span> <span class="nf">merge_exit</span><span class="p">(</span><span class="n">new_co</span><span class="p">,</span> <span class="n">bc_source</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span> <span class="n">ins_import_names</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Special handler for inserting code at the very end of a module.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bc_source</span><span class="p">)</span>
+    <span class="n">input_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bc_input</span><span class="p">)</span>
+    <span class="n">end_index</span> <span class="o">=</span> <span class="n">length</span> <span class="o">-</span> <span class="mi">2</span>
+    <span class="n">co_source</span> <span class="o">=</span> <span class="n">bc_source</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">5</span><span class="p">]</span>
+
+    <span class="n">unrolled_bytecode</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">j</span><span class="p">,</span> <span class="n">injection_start</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">:</span>
+      <span class="n">current_index</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">cflow_in</span><span class="p">,</span> <span class="n">code_object</span> <span class="o">=</span> <span class="n">bc_source</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">code_object</span> <span class="o">!=</span> <span class="n">co_source</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">continue</span>
+
+      <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">end_index</span><span class="p">:</span>
+        <span class="n">injection_start</span> <span class="o">=</span> <span class="n">j</span>
+        <span class="n">Merger</span><span class="o">.</span><span class="n">inline_instrument</span><span class="p">(</span><span class="n">unrolled_bytecode</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+      <span class="n">unrolled_bytecode</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">current_index</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">cflow_in</span><span class="p">,</span> <span class="n">code_object</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+      <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c"># Fix ending jump targets by making them absolute</span>
+    <span class="n">bc_indices</span> <span class="o">=</span> <span class="n">Merger</span><span class="o">.</span><span class="n">build_bytecode_offsets</span><span class="p">(</span><span class="n">new_co</span><span class="p">,</span> <span class="n">unrolled_bytecode</span><span class="p">)</span>
+
+    <span class="n">new_bytecode</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unrolled_bytecode</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">:</span>
+      <span class="n">bc_tpl</span> <span class="o">=</span> <span class="n">unrolled_bytecode</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+      <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">instr</span> <span class="o">=</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">CodeObject</span><span class="o">.</span><span class="n">is_jump_op</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="n">injection_start</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">injection_start</span> <span class="o">+</span> <span class="n">input_length</span><span class="p">):</span>
+        <span class="n">new_address</span> <span class="o">=</span> <span class="n">arg</span>
+        <span class="c"># We actually need to change the addresses form the exit code</span>
+        <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjabs</span><span class="p">:</span>
+          <span class="n">new_address</span> <span class="o">=</span> <span class="p">(</span><span class="n">arg</span> <span class="o">-</span> <span class="n">index</span><span class="p">)</span> <span class="o">+</span> <span class="n">bc_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">new_address</span> <span class="o">=</span> <span class="n">arg</span>
+
+        <span class="n">new_bytecode</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">bc_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> \
+                              <span class="n">new_address</span><span class="p">,</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">4</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">5</span><span class="p">]),</span> \
+                             <span class="n">instr</span><span class="p">))</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_bytecode</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">bc_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> \
+                              <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">4</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">5</span><span class="p">]),</span> \
+                             <span class="n">instr</span><span class="p">))</span>
+      <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">new_bytecode</span>
+
+</div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Merger.already_instrumented"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.Merger.already_instrumented">[docs]</a>  <span class="k">def</span> <span class="nf">already_instrumented</span><span class="p">(</span><span class="n">bc_source</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Checks if the instrumentation in bc_input is already in bc_source</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">op_arg_source</span> <span class="o">=</span> <span class="p">[(</span><span class="n">tpl</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">tpl</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="k">for</span> <span class="n">tpl</span> <span class="ow">in</span> <span class="n">bc_source</span> <span class="k">if</span> <span class="n">tpl</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjabs</span><span class="p">]</span>
+    <span class="n">op_arg_input</span> <span class="o">=</span> <span class="p">[(</span><span class="n">tpl</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">tpl</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="k">for</span> <span class="n">tpl</span> <span class="ow">in</span> <span class="n">bc_input</span> <span class="k">if</span> <span class="n">tpl</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjabs</span><span class="p">]</span>
+
+    <span class="n">source_length</span><span class="p">,</span> <span class="n">input_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">op_arg_source</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">op_arg_input</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">source_length</span> <span class="o">&lt;=</span> <span class="n">input_length</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">source_length</span><span class="p">):</span>
+      <span class="k">if</span> <span class="n">op_arg_input</span> <span class="o">==</span> <span class="n">op_arg_source</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">input_length</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span>
+
+</div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Merger.build_bytecode_offsets"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.Merger.build_bytecode_offsets">[docs]</a>  <span class="k">def</span> <span class="nf">build_bytecode_offsets</span><span class="p">(</span><span class="n">new_co</span><span class="p">,</span> <span class="n">bytecode</span><span class="p">):</span>
+    <span class="n">bc_indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">current_size</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">bc_tpl</span> <span class="ow">in</span> <span class="n">bytecode</span><span class="p">:</span>
+      <span class="n">bc_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_size</span><span class="p">)</span>
+      <span class="n">current_size</span> <span class="o">+=</span> <span class="n">new_co</span><span class="o">.</span><span class="n">get_instruction_size</span><span class="p">(</span><span class="n">op</span><span class="o">=</span><span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span>
+                                                  <span class="n">arg</span><span class="o">=</span><span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">],</span>
+                                                  <span class="n">bc_index</span><span class="o">=</span><span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">bc_indices</span>
+
+</div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Merger.resolve_jump_targets"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.Merger.resolve_jump_targets">[docs]</a>  <span class="k">def</span> <span class="nf">resolve_jump_targets</span><span class="p">(</span><span class="n">bytecode</span><span class="p">,</span> <span class="n">new_co</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Resolves targets of jumps. Since we add new bytecode, absolute (resp. relative)</span>
+<span class="sd">      jump address (resp. offset) can change and we need to track the changes to find</span>
+<span class="sd">      the new targets.</span>
+
+<span class="sd">      The resolver works in two phases:</span>
+
+<span class="sd">      1. Create the list of bytecode indices based on the size of the</span>
+<span class="sd">         opcode and its argument.</span>
+<span class="sd">      2. For each jump opcode, take its argument and resolve it in the same</span>
+<span class="sd">         part of the bytecode (e.g., instrument bytecode or original bytecode).</span>
+
+<span class="sd">      :param bytecode: The structure computed by ``get_final_bytecode`` which overlays</span>
+<span class="sd">                       the final bytecode sequences and its origin.</span>
+<span class="sd">      :param new_co: The currently created ``CodeObject``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_bytecode</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">bc_indices</span> <span class="o">=</span> <span class="n">Merger</span><span class="o">.</span><span class="n">build_bytecode_offsets</span><span class="p">(</span><span class="n">new_co</span><span class="p">,</span> <span class="n">bytecode</span><span class="p">)</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bc_indices</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">find_target_index</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">instr_counter</span><span class="p">,</span> <span class="n">current_index</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+      <span class="n">direction</span> <span class="o">=</span> <span class="mi">1</span>
+      <span class="n">is_absolute</span> <span class="o">=</span> <span class="bp">False</span>
+      <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjabs</span><span class="p">:</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">target</span> <span class="o">&gt;</span> <span class="n">current_index</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">is_absolute</span> <span class="o">=</span> <span class="bp">True</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">target</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+      <span class="n">bound</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">direction</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">length</span>
+
+      <span class="c"># Search in the same instrumentation code if the target address is</span>
+      <span class="c"># already present. If so, we just return that one.</span>
+      <span class="n">k</span> <span class="o">=</span> <span class="n">j</span>
+      <span class="k">while</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">bound</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">bytecode</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">target</span> <span class="ow">and</span> <span class="n">bytecode</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">instr_counter</span><span class="p">:</span>
+          <span class="k">return</span> <span class="n">k</span>
+        <span class="n">k</span> <span class="o">+=</span> <span class="n">direction</span>
+
+      <span class="c"># If we didn&#39;t find a match for the jump, we need to look outside of the</span>
+      <span class="c"># bounds of the same source code.</span>
+      <span class="n">k</span> <span class="o">=</span> <span class="n">j</span>
+      <span class="n">current_pos</span> <span class="o">=</span> <span class="n">bc_indices</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+      <span class="n">increment</span> <span class="o">=</span> <span class="p">(</span><span class="n">bytecode</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">bytecode</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">is_absolute</span> <span class="k">else</span> <span class="p">(</span><span class="n">bytecode</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span>
+      <span class="n">idx</span> <span class="o">=</span> <span class="n">bc_indices</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">current_pos</span> <span class="o">+</span> <span class="n">increment</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">idx</span>
+
+
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">bc_tpl</span> <span class="ow">in</span> <span class="n">bytecode</span><span class="p">:</span>
+      <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">instr</span> <span class="o">=</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">CodeObject</span><span class="o">.</span><span class="n">is_jump_op</span><span class="p">(</span><span class="n">op</span><span class="p">):</span>
+        <span class="n">new_bytecode</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">bc_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> \
+                              <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">4</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">5</span><span class="p">]),</span> \
+                             <span class="n">instr</span><span class="p">))</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_address</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">target_address</span> <span class="o">=</span> <span class="n">arg</span> <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjabs</span> <span class="k">else</span> <span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">+</span> <span class="n">arg</span><span class="p">)</span>
+        <span class="n">target_index</span> <span class="o">=</span> <span class="n">find_target_index</span><span class="p">(</span><span class="n">target_address</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">instr</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opcode</span><span class="o">.</span><span class="n">hasjrel</span><span class="p">:</span>
+          <span class="n">new_address</span> <span class="o">=</span> <span class="n">bc_indices</span><span class="p">[</span><span class="n">target_index</span><span class="p">]</span> <span class="o">-</span> <span class="n">bc_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">3</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">new_address</span> <span class="o">=</span> <span class="n">bc_indices</span><span class="p">[</span><span class="n">target_index</span><span class="p">]</span>
+
+        <span class="n">new_bytecode</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">bc_indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> \
+                              <span class="n">new_address</span><span class="p">,</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">4</span><span class="p">],</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">5</span><span class="p">]),</span> \
+                             <span class="n">instr</span><span class="p">))</span>
+      <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">new_bytecode</span>
+
+</div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Merger.get_final_bytecode"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.Merger.get_final_bytecode">[docs]</a>  <span class="k">def</span> <span class="nf">get_final_bytecode</span><span class="p">(</span><span class="n">bc_source</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span> <span class="n">co_source</span><span class="p">,</span> <span class="n">co_input</span><span class="p">,</span> \
+                         <span class="n">location</span><span class="p">,</span> <span class="n">ins_lineno</span><span class="p">,</span> <span class="n">ins_offset</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Computes the final sequences of opcodes and keep old values. It also tracks</span>
+<span class="sd">      what sequences come from the instrument code or the original code, so we can</span>
+<span class="sd">      resolve jumps.</span>
+
+<span class="sd">      :param bc_source: The bytecode of the orignal code.</span>
+<span class="sd">      :param bc_input: The instrument bytecode to inject.</span>
+<span class="sd">      :param co_source: The orignal code object.</span>
+<span class="sd">      :param co_input: The instrument code object.</span>
+<span class="sd">      :param location: The location of the instrumentation. It should be either: ``BEFORE``,</span>
+<span class="sd">                       ``AFTER``, ``LINENO``, etc.</span>
+<span class="sd">      :param ins_lineno: The line number to inject the instrument at. Only valid when</span>
+<span class="sd">                         the injection location is ``LINENO``.</span>
+<span class="sd">      :param ins_offset: Not used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bytecode</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">instr_counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">i</span><span class="p">,</span> <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bc_source</span><span class="p">)</span>
+    <span class="n">current_index</span><span class="p">,</span> <span class="n">lineno</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">:</span>
+      <span class="n">current_index</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">cflow_in</span><span class="p">,</span> <span class="n">code_object</span> <span class="o">=</span> <span class="n">bc_source</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">code_object</span> <span class="o">!=</span> <span class="n">co_source</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">continue</span>
+
+      <span class="k">if</span> <span class="n">location</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Merger</span><span class="o">.</span><span class="n">BEFORE</span><span class="p">,</span> <span class="n">Merger</span><span class="o">.</span><span class="n">MODULE_ENTER</span><span class="p">)</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">instr_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">Merger</span><span class="o">.</span><span class="n">inline_instrument</span><span class="p">(</span><span class="n">bytecode</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">instr_counter</span><span class="p">,</span>
+                                 <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">)</span>
+
+      <span class="k">elif</span> <span class="n">location</span> <span class="o">==</span> <span class="n">Merger</span><span class="o">.</span><span class="n">LINENO</span> <span class="ow">and</span> <span class="n">lineno</span> <span class="o">==</span> <span class="n">ins_lineno</span><span class="p">:</span>
+        <span class="n">instr_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">Merger</span><span class="o">.</span><span class="n">inline_instrument</span><span class="p">(</span><span class="n">bytecode</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">instr_counter</span><span class="p">,</span>
+                                 <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">)</span>
+
+      <span class="k">elif</span> <span class="n">location</span> <span class="o">==</span> <span class="n">Merger</span><span class="o">.</span><span class="n">AFTER</span> <span class="ow">and</span> <span class="n">op</span> <span class="o">==</span> <span class="n">RETURN_VALUE</span><span class="p">:</span>
+        <span class="n">instr_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">Merger</span><span class="o">.</span><span class="n">inline_instrument</span><span class="p">(</span><span class="n">bytecode</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">instr_counter</span><span class="p">,</span>
+                                 <span class="n">template</span><span class="o">=</span><span class="n">RETURN_INSTR_TEMPLATE</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">)</span>
+
+      <span class="c"># Append current code</span>
+      <span class="n">bytecode</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">current_index</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">cflow_in</span><span class="p">,</span> <span class="n">code_object</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+      <span class="k">if</span> <span class="n">location</span> <span class="o">==</span> <span class="n">Merger</span><span class="o">.</span><span class="n">INSTRUCTION</span><span class="p">:</span>
+        <span class="n">instr_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">Merger</span><span class="o">.</span><span class="n">inline_instrument</span><span class="p">(</span><span class="n">bytecode</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">instr_counter</span><span class="p">,</span>
+                                 <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">)</span>
+
+      <span class="k">if</span> <span class="n">location</span> <span class="o">==</span> <span class="n">Merger</span><span class="o">.</span><span class="n">MODULE_EXIT</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">==</span> <span class="n">length</span> <span class="o">-</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">instr_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">Merger</span><span class="o">.</span><span class="n">inline_instrument</span><span class="p">(</span><span class="n">bytecode</span><span class="p">,</span> <span class="n">bc_input</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                 <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">)</span>
+      <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">bytecode</span>
+
+</div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Merger.inline_instrument"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.merger.Merger.inline_instrument">[docs]</a>  <span class="k">def</span> <span class="nf">inline_instrument</span><span class="p">(</span><span class="n">dst_bytecode</span><span class="p">,</span> <span class="n">src_bytecode</span><span class="p">,</span> <span class="n">original_lineno</span><span class="p">,</span> \
+                        <span class="n">instr_counter</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">UNKNOWN</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Inline the instrument bytecode in place of the current state of ``dst_bytecode``.</span>
+
+<span class="sd">      :param dst_bytecode: The list that contains the final bytecode.</span>
+<span class="sd">      :param src_bytecode: The bytecode of the instrument.</span>
+<span class="sd">      :param original_lineno: The line number from the original bytecode, so we always</span>
+<span class="sd">                              map the instrument code line numbers to the code being</span>
+<span class="sd">                              instrumented.</span>
+<span class="sd">      :param instr_counter: A counter to track the frames of the different instrumentation</span>
+<span class="sd">                            code being inlined. This is used to resolve jump targets.</span>
+<span class="sd">      :param template: An instrumentation can follow a template, if so, the actual</span>
+<span class="sd">                       template is supplied here. An example is the instrumentation ``AFTER``</span>
+<span class="sd">                       which requires to capture the return value. Defaults to None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">template_idx</span><span class="p">,</span> <span class="n">template_length</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="n">b_current_index</span><span class="p">,</span> <span class="n">b_lineno</span><span class="p">,</span> <span class="n">b_op</span><span class="p">,</span> <span class="n">b_arg</span><span class="p">,</span> <span class="n">b_cflow_in</span><span class="p">,</span> <span class="n">b_code_object</span> <span class="o">=</span> <span class="n">src_bytecode</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">template</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">template_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">template</span><span class="p">)</span>
+      <span class="c"># Unroll the template until we reached PLACEHOLDER</span>
+      <span class="k">while</span> <span class="n">template_idx</span> <span class="o">&lt;</span> <span class="n">template_length</span><span class="p">:</span>
+        <span class="n">t_op</span><span class="p">,</span> <span class="n">t_arg</span> <span class="o">=</span> <span class="n">template</span><span class="p">[</span><span class="n">template_idx</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">t_op</span> <span class="o">==</span> <span class="n">PLACEHOLDER</span><span class="p">:</span>
+          <span class="k">break</span>
+        <span class="n">dst_bytecode</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">b_current_index</span><span class="p">,</span> <span class="n">original_lineno</span><span class="p">,</span> <span class="n">t_op</span><span class="p">,</span> <span class="n">t_arg</span><span class="p">,</span>
+                              <span class="n">b_cflow_in</span><span class="p">,</span> <span class="n">b_code_object</span><span class="p">),</span>
+                             <span class="n">instr_counter</span><span class="p">))</span>
+        <span class="n">template_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c"># Inline the entire instrument code</span>
+    <span class="n">bc_i</span><span class="p">,</span> <span class="n">bc_length</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_bytecode</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">bc_i</span> <span class="o">&lt;</span> <span class="n">bc_length</span><span class="p">:</span>
+      <span class="n">b_current_index</span><span class="p">,</span> <span class="n">b_lineno</span><span class="p">,</span> <span class="n">b_op</span><span class="p">,</span> <span class="n">b_arg</span><span class="p">,</span> <span class="n">b_cflow_in</span><span class="p">,</span> <span class="n">b_code_object</span> <span class="o">=</span> <span class="n">src_bytecode</span><span class="p">[</span><span class="n">bc_i</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">b_op</span> <span class="o">!=</span> <span class="n">RETURN_VALUE</span><span class="p">:</span>
+        <span class="n">dst_bytecode</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">b_current_index</span><span class="p">,</span> <span class="n">original_lineno</span><span class="p">,</span> <span class="n">b_op</span><span class="p">,</span> <span class="n">b_arg</span><span class="p">,</span>
+                              <span class="n">b_cflow_in</span><span class="p">,</span> <span class="n">b_code_object</span><span class="p">),</span>
+                             <span class="n">instr_counter</span><span class="p">))</span>
+      <span class="n">bc_i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">template</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">template_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="k">while</span> <span class="n">template_idx</span> <span class="o">&lt;</span> <span class="n">template_length</span><span class="p">:</span>
+        <span class="n">t_op</span><span class="p">,</span> <span class="n">t_arg</span> <span class="o">=</span> <span class="n">template</span><span class="p">[</span><span class="n">template_idx</span><span class="p">]</span>
+        <span class="n">dst_bytecode</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">b_current_index</span><span class="p">,</span> <span class="n">original_lineno</span><span class="p">,</span> <span class="n">t_op</span><span class="p">,</span> <span class="n">t_arg</span><span class="p">,</span>
+                              <span class="n">b_cflow_in</span><span class="p">,</span> <span class="n">b_code_object</span><span class="p">),</span>
+                             <span class="n">instr_counter</span><span class="p">))</span>
+        <span class="n">template_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+</pre></div></div></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Romain Gaucher.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

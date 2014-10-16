@@ -1,0 +1,11 @@
+/build
+/dist
+/sandbox
+/*.egg
+/*.egg-info
+/**/__pycache__/
+*.pyc
+*.sh
+*.log
+*.json
+TODO.txt

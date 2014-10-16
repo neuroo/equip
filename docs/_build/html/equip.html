@@ -1,0 +1,508 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>equip package &mdash; equip 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="equip 0.1 documentation" href="index.html"/>
+        <link rel="up" title="API" href="api.html"/>
+        <link rel="next" title="equip.bytecode package" href="equip.bytecode.html"/>
+        <link rel="prev" title="API" href="api.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> equip</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#current-limitations">Current Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#virtualenv">virtualenv</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#instrument">Instrument</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#visitors">Visitors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#simplerewriter">SimpleRewriter</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">equip package</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">equip</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="api.html">API</a> &raquo;</li>
+      
+    <li>equip package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/equip.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="equip-package">
+<h1>equip package<a class="headerlink" href="#equip-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="equip.bytecode.html">equip.bytecode package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="equip.bytecode.html#module-equip.bytecode.code">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="equip.bytecode.html#equip-bytecode-code">equip.bytecode.code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equip.bytecode.html#equip-bytecode-decl">equip.bytecode.decl</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equip.bytecode.html#equip-bytecode-utils">equip.bytecode.utils</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="equip.bytecode.html#module-equip.bytecode">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="equip.bytecode.html#equip-bytecode">equip.bytecode</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="equip.rewriter.html">equip.rewriter package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="equip.rewriter.html#module-equip.rewriter.merger">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="equip.rewriter.html#equip-rewriter-merger">equip.rewriter.merger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equip.rewriter.html#equip-rewriter-simple">equip.rewriter.simple</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="equip.rewriter.html#module-equip.rewriter">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="equip.rewriter.html#equip-rewriter">equip.rewriter</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="equip.utils.html">equip.utils package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="equip.utils.html#module-equip.utils.files">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="equip.utils.html#equip-utils-files">equip.utils.files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equip.utils.html#equip-utils-log">equip.utils.log</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="equip.utils.html#module-equip.utils">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="equip.visitors.html">equip.visitors package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="equip.visitors.html#module-equip.visitors.bytecode">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="equip.visitors.html#equip-visitors-bytecode">equip.visitors.bytecode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equip.visitors.html#equip-visitors-classes">equip.visitors.classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equip.visitors.html#equip-visitors-methods">equip.visitors.methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="equip.visitors.html#equip-visitors-modules">equip.visitors.modules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="equip.visitors.html#module-equip.visitors">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="equip.visitors.html#equip-visitors">equip.visitors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="module-equip.instrument">
+<span id="submodules"></span><h2>Submodules<a class="headerlink" href="#module-equip.instrument" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="equip-instrument">
+<h3>equip.instrument<a class="headerlink" href="#equip-instrument" title="Permalink to this headline">¶</a></h3>
+<p>Main interface to handle the instrumentation and run the visitors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">copyright:</th><td class="field-body"><ol class="first loweralpha simple" start="3">
+<li>2014 by Romain Gaucher (&#64;rgaucher)</li>
+</ol>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">license:</th><td class="field-body"><p class="first last">Apache 2, see LICENSE for more details.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="equip.instrument.Instrumentation">
+<em class="property">class </em><tt class="descclassname">equip.instrument.</tt><tt class="descname">Instrumentation</tt><big>(</big><em>location=None</em><big>)</big><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="docutils">
+<dt>Main class for handling the instrumentation. The typical workflow is:</dt>
+<dd><ol class="first last arabic simple">
+<li>Set the location from the ctor or using the <cite>location</cite> setter</li>
+<li>Update options, such as <cite>force-rebuild</cite></li>
+<li>Call <cite>prepare_program</cite> to scan the file system for source/bytecode</li>
+<li>Register any <cite>on_enter</cite>/<cite>on_exit</cite> instrumentation callbacks</li>
+<li><cite>apply</cite> the instrumentation using a customer visitor</li>
+</ol>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="equip.instrument.Instrumentation.KNOWN_OPTIONS">
+<tt class="descname">KNOWN_OPTIONS</tt><em class="property"> = ('force-rebuild',)</em><a class="headerlink" href="#equip.instrument.Instrumentation.KNOWN_OPTIONS" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list of known options</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.instrument.Instrumentation.apply">
+<tt class="descname">apply</tt><big>(</big><em>visitor</em>, <em>rewrite=False</em><big>)</big><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs the visitor over all matching types (e.g., MethodDeclaration, etc.).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>visitor</strong> &#8211; The instance of the visitor to run over the program.</li>
+<li><strong>rewrite</strong> &#8211; Whether the instrumentation should overwrite the bytecode
+file (pyc) at the end. Default is <cite>False</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.instrument.Instrumentation.get_option">
+<tt class="descname">get_option</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation.get_option"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation.get_option" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the value of an option. Defaults to <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; The name of the option.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.instrument.Instrumentation.instrument">
+<tt class="descname">instrument</tt><big>(</big><em>visitor</em>, <em>bytecode_file</em>, <em>rewrite=False</em><big>)</big><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation.instrument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation.instrument" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads the representation of the bytecode in <cite>bytecode_file</cite>, and apply
+the visitor to the representation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>visitor</strong> &#8211; The instance of the visitor to run over the representation
+of the bytecode.</li>
+<li><strong>bytecode_file</strong> &#8211; Absolute path of the file containing the bytecode (pyc).</li>
+<li><strong>rewrite</strong> &#8211; Whether the instrumentation should overwrite the bytecode
+file (pyc) at the end. Default is <cite>False</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="equip.instrument.Instrumentation.location">
+<tt class="descname">location</tt><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation.location"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation.location" title="Permalink to this definition">¶</a></dt>
+<dd><p>The path that contains the bytecode of the application to instrument. The path
+can either be a string or an iterable.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.instrument.Instrumentation.on_enter">
+<tt class="descname">on_enter</tt><big>(</big><em>python_code</em>, <em>import_code=None</em><big>)</big><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation.on_enter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation.on_enter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inserts the <tt class="docutils literal"><span class="pre">python_code</span></tt> at the beginning of the module inside an if statement. The
+resulting injected code looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+  <span class="n">python_code</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>python_code</strong> &#8211; Python code to inject before the module gets executed (if it&#8217;s executed
+under main). The code is not executed if it&#8217;s not under main.</li>
+<li><strong>import_code</strong> &#8211; Python code that contains the import statements that might be required
+by the injected <tt class="docutils literal"><span class="pre">python_code</span></tt>. Defaults to None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.instrument.Instrumentation.on_exit">
+<tt class="descname">on_exit</tt><big>(</big><em>python_code</em>, <em>import_code=None</em><big>)</big><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation.on_exit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation.on_exit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inserts the <tt class="docutils literal"><span class="pre">python_code</span></tt> at the end of the module inside an if statement. The
+resulting injected code looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+  <span class="n">python_code</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>python_code</strong> &#8211; Python code to inject after the module gets executed (if it&#8217;s executed
+under main). The code is not executed if it&#8217;s not under main.</li>
+<li><strong>import_code</strong> &#8211; Python code that contains the import statements that might be required
+by the injected <tt class="docutils literal"><span class="pre">python_code</span></tt>. Defaults to None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.instrument.Instrumentation.prepare_program">
+<tt class="descname">prepare_program</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation.prepare_program"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation.prepare_program" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the representation of the program, and compiles all source files
+if it&#8217;s either necessary (e.g., missing bytecode for existing source) or
+if the <tt class="docutils literal"><span class="pre">force-rebuild</span></tt> option is set.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.instrument.Instrumentation.set_option">
+<tt class="descname">set_option</tt><big>(</big><em>key</em>, <em>value=True</em><big>)</big><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation.set_option"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation.set_option" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets one of the options used later one by the instrumentation. The available
+options are listed in <cite>KNOWN_OPTIONS</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>key</strong> &#8211; The name of the option to set.</li>
+<li><strong>value</strong> &#8211; The value of the option. Defaults to <tt class="docutils literal"><span class="pre">True</span></tt>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.instrument.Instrumentation.validate">
+<tt class="descname">validate</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/instrument.html#Instrumentation.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.instrument.Instrumentation.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Debugging info for the instrumented bytecode. Iterates again over all the bytecode
+and dumps the current (instrmented) bytecode.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-equip.prog"></span><div class="section" id="equip-prog">
+<h3>equip.prog<a class="headerlink" href="#equip-prog" title="Permalink to this headline">¶</a></h3>
+<p>Handles the current program for instrumentation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">copyright:</th><td class="field-body"><ol class="first loweralpha simple" start="3">
+<li>2014 by Romain Gaucher (&#64;rgaucher)</li>
+</ol>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">license:</th><td class="field-body"><p class="first last">Apache 2, see LICENSE for more details.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="equip.prog.Program">
+<em class="property">class </em><tt class="descclassname">equip.prog.</tt><tt class="descname">Program</tt><big>(</big><em>instrumentation</em><big>)</big><a class="reference internal" href="_modules/equip/prog.html#Program"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.prog.Program" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Captures the sources and binaries from the current program to instrument.</p>
+<dl class="attribute">
+<dt id="equip.prog.Program.bytecode_files">
+<tt class="descname">bytecode_files</tt><a class="reference internal" href="_modules/equip/prog.html#Program.bytecode_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.prog.Program.bytecode_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list of pyc files.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.prog.Program.compile_program">
+<tt class="descname">compile_program</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/prog.html#Program.compile_program"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.prog.Program.compile_program" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compiles the program.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.prog.Program.create_program">
+<tt class="descname">create_program</tt><big>(</big><em>skip_rebuild=False</em><big>)</big><a class="reference internal" href="_modules/equip/prog.html#Program.create_program"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.prog.Program.create_program" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the structure of the program with its source files and
+binary files. When the <tt class="docutils literal"><span class="pre">Instrument</span></tt> option <tt class="docutils literal"><span class="pre">force-rebuild</span></tt>
+is set, it will trigger the compilation of all python source files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>skip_rebuild</strong> &#8211; Force skipping the build. Mostly here due to the
+recursive nature of this function.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="equip.prog.Program.split_program_source_bc">
+<em class="property">static </em><tt class="descname">split_program_source_bc</tt><big>(</big><em>lst</em><big>)</big><a class="reference internal" href="_modules/equip/prog.html#Program.split_program_source_bc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.prog.Program.split_program_source_bc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-equip">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-equip" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="equip">
+<h3>equip<a class="headerlink" href="#equip" title="Permalink to this headline">¶</a></h3>
+<p>Bytecode instrumentation framework for Python.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">copyright:</th><td class="field-body"><ol class="first loweralpha simple" start="3">
+<li>2014 by Romain Gaucher (&#64;rgaucher)</li>
+</ol>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">license:</th><td class="field-body"><p class="first last">Apache 2, see LICENSE for more details.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="equip.bytecode.html" class="btn btn-neutral float-right" title="equip.bytecode package"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="api.html" class="btn btn-neutral" title="API"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Romain Gaucher.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

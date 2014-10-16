@@ -1,0 +1,270 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Getting Started &mdash; equip 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="equip 0.1 documentation" href="index.html"/>
+        <link rel="next" title="Examples" href="examples.html"/>
+        <link rel="prev" title="Installation" href="installation.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> equip</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#current-limitations">Current Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#virtualenv">virtualenv</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#instrument">Instrument</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visitors">Visitors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simplerewriter">SimpleRewriter</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="equip.html">equip package</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">equip</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Getting Started</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/gettingstarted.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<p>equip has a simple interface that contains a handful of important classes to work with:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Instrument</li>
+<li>SimpleRewriter</li>
+<li>MethodVisitor</li>
+</ul>
+</div></blockquote>
+<div class="section" id="instrument">
+<h2>Instrument<a class="headerlink" href="#instrument" title="Permalink to this headline">¶</a></h2>
+<p>Main interface for the instrumentation. It triggers the conversion from the bytecode to
+the internal representation, as well as executing the visitors and writing back the resulting
+bytecode.</p>
+<p>The workflow of <tt class="docutils literal"><span class="pre">Instrument</span></tt> requires the following steps:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">Pass the location (or locations) to the Instrument:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">instr</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;path/to/module&#39;</span><span class="p">,</span> <span class="s">&#39;path/to/other/module&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Ask <tt class="docutils literal"><span class="pre">Instrument</span></tt> to prepare the program by compiling the sources (if necessary or requested)
+and creating a list of bytecode files that can be instrumented:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="ow">not</span> <span class="n">instr</span><span class="o">.</span><span class="n">prepare_program</span><span class="p">():</span>
+  <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Error while compiling the code...&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Apply the visitor on all bytecode files and persist the new bytecode:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">instr</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">my_visitor</span><span class="p">,</span> <span class="n">rewrite</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</div></blockquote>
+<p>The compilation of the program is not performed by default as the program might already be compiled,
+and the bytecode ready to consume. If however, we want to force rebuilding the bytecode for the
+entire application, we can set the force-rebuild option between step 1 and 2:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">instr</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s">&#39;force-rebuild&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="visitors">
+<h2>Visitors<a class="headerlink" href="#visitors" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">Instrument</span></tt> creates a representation for each pyc file that contains different
+<tt class="docutils literal"><span class="pre">Declaration</span></tt> objects. A visitor can be created to iterate over these <tt class="docutils literal"><span class="pre">Declaration</span></tt>.</p>
+<p>The most commonly used visitor is the <tt class="docutils literal"><span class="pre">MethodVisitor</span></tt> that is triggered over all method
+declarations found in the bytecode.</p>
+<p>Here&#8217;s an example of a visitor that prints the start and end line for each method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MethodLinesVisitor</span><span class="p">(</span><span class="n">MethodVisitor</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">MethodVisitor</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meth_decl</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">&quot;Method </span><span class="si">%s</span><span class="s">: start=</span><span class="si">%d</span><span class="s">, end=</span><span class="si">%d</span><span class="s">&quot;</span> \
+          <span class="o">%</span>  <span class="p">(</span><span class="n">meth_decl</span><span class="o">.</span><span class="n">method_name</span><span class="p">,</span> <span class="n">meth_decl</span><span class="o">.</span><span class="n">start_lineno</span><span class="p">,</span> <span class="n">meth_decl</span><span class="o">.</span><span class="n">end_lineno</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="simplerewriter">
+<h2>SimpleRewriter<a class="headerlink" href="#simplerewriter" title="Permalink to this headline">¶</a></h2>
+<p>Handles the insertion of bytecode, and generation of proper bytecode. The rewriter allows for
+multiple operations such as:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Insert generic bytecode</li>
+<li>Insert import statements</li>
+<li>Insert on_enter/on_exit callbacks</li>
+</ul>
+</div></blockquote>
+<p>The rewriter is called from within a visitor or any other way to get a particular <tt class="docutils literal"><span class="pre">Declaration</span></tt>.
+It consumes the <tt class="docutils literal"><span class="pre">Declaration</span></tt> and allows for inserting bytecode at any desired point in the
+original bytecode.</p>
+<p>For example, we can add create an instrumentation to insert for all returns in a method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ON_AFTER</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">print &quot;Exit {method_name}, return value := </span><span class="si">%s</span><span class="s">&quot; </span><span class="si">% r</span><span class="s">epr({return_value})</span>
+<span class="s">&quot;&quot;&quot;</span>
+
+<span class="k">class</span> <span class="nc">ReturnValuesVisitor</span><span class="p">(</span><span class="n">MethodVisitor</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">MethodVisitor</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meth_decl</span><span class="p">):</span>
+    <span class="n">rewriter</span> <span class="o">=</span> <span class="n">SimpleRewriter</span><span class="p">(</span><span class="n">meth_decl</span><span class="p">)</span>
+    <span class="n">rewriter</span><span class="o">.</span><span class="n">insert_after</span><span class="p">(</span><span class="n">ON_AFTER</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that the <tt class="docutils literal"><span class="pre">Instrument</span></tt> is currently responsible for applying the changes, which means
+serializing the declarations of the current bytecode.</p>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral" title="Installation"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Romain Gaucher.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

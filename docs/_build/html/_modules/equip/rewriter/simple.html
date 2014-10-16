@@ -1,0 +1,491 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>equip.rewriter.simple &mdash; equip 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="equip 0.1 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../index.html" class="fa fa-home"> equip</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#current-limitations">Current Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#virtualenv">virtualenv</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gettingstarted.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#instrument">Instrument</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#visitors">Visitors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gettingstarted.html#simplerewriter">SimpleRewriter</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../equip.html">equip package</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">equip</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>equip.rewriter.simple</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for equip.rewriter.simple</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">  equip.rewriter.simple</span>
+<span class="sd">  ~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">  A simplified interface (yet the main one) to handle the injection</span>
+<span class="sd">  of instrumentation code.</span>
+
+<span class="sd">  :copyright: (c) 2014 by Romain Gaucher (@rgaucher)</span>
+<span class="sd">  :license: Apache 2, see LICENSE for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">from</span> <span class="nn">..utils.log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..bytecode.decl</span> <span class="kn">import</span> <span class="n">ModuleDeclaration</span><span class="p">,</span> \
+                            <span class="n">MethodDeclaration</span><span class="p">,</span> \
+                            <span class="n">TypeDeclaration</span>
+<span class="kn">from</span> <span class="nn">..bytecode.code</span> <span class="kn">import</span> <span class="n">BytecodeObject</span>
+<span class="kn">from</span> <span class="nn">..bytecode.utils</span> <span class="kn">import</span> <span class="n">show_bytecode</span><span class="p">,</span> \
+                             <span class="n">get_debug_code_object_info</span>
+
+<span class="kn">from</span> <span class="nn">.merger</span> <span class="kn">import</span> <span class="n">Merger</span><span class="p">,</span> <span class="n">RETURN_CANARY_NAME</span><span class="p">,</span> <span class="n">LOAD_GLOBAL</span>
+
+
+<span class="c"># A global tracking what file we added the imports to. This should be refactored</span>
+<span class="c"># and we should inspect the module/method for imports.</span>
+<span class="n">GLOBAL_IMPORTS_ADDED</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+
+<span class="n">EXIT_ENTER_CODE_TEMPLATE</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">if __name__ == &#39;__main__&#39;:</span>
+<span class="si">%s</span><span class="s"></span>
+<span class="s">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SimpleRewriter"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter">[docs]</a><span class="k">class</span> <span class="nc">SimpleRewriter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The current main rewriter that works for one ``Declaration`` object. Using this</span>
+<span class="sd">    rewriter will modify the given declaration object by possibly replacing all of</span>
+<span class="sd">    its associated code object.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="c">#: List of the parameters that can be used for formatting the code</span>
+  <span class="c">#: to inject.</span>
+  <span class="c">#: The values are:</span>
+  <span class="c">#:</span>
+  <span class="c">#: * ``method_name``: The name of the method that is being called.</span>
+  <span class="c">#:</span>
+  <span class="c">#: * ``lineno``: The start line number of the declaration object being</span>
+  <span class="c">#:               instrumented.</span>
+  <span class="c">#:</span>
+  <span class="c">#: * ``file_name``: The file name of the current module.</span>
+  <span class="c">#:</span>
+  <span class="c">#: * ``class_name``: The name of the class a method belongs to.</span>
+  <span class="c">#:</span>
+  <span class="n">KNOWN_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;method_name&#39;</span><span class="p">,</span> <span class="s">&#39;lineno&#39;</span><span class="p">,</span> <span class="s">&#39;file_name&#39;</span><span class="p">,</span> <span class="s">&#39;class_name&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;arg0&#39;</span><span class="p">,</span> <span class="s">&#39;arg1&#39;</span><span class="p">,</span> <span class="s">&#39;arg2&#39;</span><span class="p">,</span> <span class="s">&#39;arg3&#39;</span><span class="p">,</span> <span class="s">&#39;arg4&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;arg5&#39;</span><span class="p">,</span> <span class="s">&#39;arg6&#39;</span><span class="p">,</span> <span class="s">&#39;arg7&#39;</span><span class="p">,</span> <span class="s">&#39;arg8&#39;</span><span class="p">,</span> <span class="s">&#39;arg9&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;arg10&#39;</span><span class="p">,</span> <span class="s">&#39;arg11&#39;</span><span class="p">,</span> <span class="s">&#39;arg12&#39;</span><span class="p">,</span> <span class="s">&#39;arg13&#39;</span><span class="p">,</span> <span class="s">&#39;arg14&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;arguments&#39;</span><span class="p">,</span> <span class="s">&#39;return_value&#39;</span><span class="p">)</span>
+
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decl</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">decl</span> <span class="o">=</span> <span class="n">decl</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">original_decl</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decl</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="n">ModuleDeclaration</span><span class="p">):</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decl</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decl</span><span class="o">.</span><span class="n">parent_module</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">import_lives</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="SimpleRewriter.insert_before"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.insert_before">[docs]</a>  <span class="k">def</span> <span class="nf">insert_before</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">python_code</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Insert code at the beginning of the method&#39;s body.</span>
+
+<span class="sd">      The submitted code can be formatted using ``fields`` declared in ``KNOWN_FIELDS``.</span>
+<span class="sd">      Since ``string.format`` is used once the values are dumped, the injected code should</span>
+<span class="sd">      be property structured.</span>
+
+<span class="sd">      :param python_code: The python code to be formatted, compiled, and inserted</span>
+<span class="sd">                          at the beginning of the method body.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decl</span><span class="p">,</span> <span class="n">MethodDeclaration</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Can only insert before/after in a method&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_generic</span><span class="p">(</span><span class="n">python_code</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">Merger</span><span class="o">.</span><span class="n">BEFORE</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="SimpleRewriter.insert_after"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.insert_after">[docs]</a>  <span class="k">def</span> <span class="nf">insert_after</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">python_code</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Insert code at each `RETURN_VALUE` opcode. See `insert_before`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decl</span><span class="p">,</span> <span class="n">MethodDeclaration</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Can only insert before/after in a method&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_generic</span><span class="p">(</span><span class="n">python_code</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">Merger</span><span class="o">.</span><span class="n">AFTER</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="SimpleRewriter.insert_generic"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.insert_generic">[docs]</a>  <span class="k">def</span> <span class="nf">insert_generic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">python_code</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">Merger</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span> \
+                     <span class="n">ins_lineno</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ins_offset</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ins_module</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ins_import</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Generic code injection utils. It first formats the supplied ``python_code``,</span>
+<span class="sd">      compiles it to get the `code_object`, and merge this new `code_object` with</span>
+<span class="sd">      the one of the current declaration object (``decl``). The insertion is done by</span>
+<span class="sd">      the ``Merger``.</span>
+
+<span class="sd">      When the injection is done, this method will go and recursively update all</span>
+<span class="sd">      references to the old `code_object` in the parents (when a parent changes, it is</span>
+<span class="sd">      as well updated and its new ``code_object`` propagated upwards). This process is</span>
+<span class="sd">      required as Python&#39;s code objects are nested in parent&#39;s code objects, and they</span>
+<span class="sd">      are all read-only. This process breaks any references that were hold on previously</span>
+<span class="sd">      used code objects (e.g., don&#39;t do that when the instrumented code is running).</span>
+
+<span class="sd">      :param python_code: The code to be formatted and inserted.</span>
+<span class="sd">      :param location: The kind of insertion to perform.</span>
+<span class="sd">      :param ins_lineno: When an insertion should occur at one given line of code,</span>
+<span class="sd">                         use this parameter. Defaults to -1.</span>
+<span class="sd">      :param ins_offset: When an insertion should occur at one given bytecode offset,</span>
+<span class="sd">                         use this parameter. Defaults to -1.</span>
+<span class="sd">      :param ins_module: Specify the code insertion should happen in the module</span>
+<span class="sd">                         itself and not the current declaration.</span>
+<span class="sd">      :param ins_import: True of the method is called for inserting an import statement.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">target_decl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decl</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">ins_module</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span>
+    <span class="n">original_decl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_decl</span>
+    <span class="k">if</span> <span class="n">ins_module</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">original_decl</span><span class="p">,</span> <span class="n">ModuleDeclaration</span><span class="p">):</span>
+      <span class="n">original_decl</span> <span class="o">=</span> <span class="n">original_decl</span><span class="o">.</span><span class="n">parent_module</span>
+
+    <span class="n">formatted_code</span> <span class="o">=</span> <span class="n">SimpleRewriter</span><span class="o">.</span><span class="n">format_code</span><span class="p">(</span><span class="n">target_decl</span><span class="p">,</span> <span class="n">python_code</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+    <span class="n">injected_co</span> <span class="o">=</span> <span class="n">SimpleRewriter</span><span class="o">.</span><span class="n">get_code_object</span><span class="p">(</span><span class="n">formatted_code</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ins_import</span><span class="p">:</span>
+      <span class="c"># Parse the import statement to extract the imported names.</span>
+      <span class="n">bc_import</span> <span class="o">=</span> <span class="n">BytecodeObject</span><span class="o">.</span><span class="n">get_parsed_code</span><span class="p">(</span><span class="n">injected_co</span><span class="p">)</span>
+      <span class="n">import_stmts</span> <span class="o">=</span> <span class="n">BytecodeObject</span><span class="o">.</span><span class="n">get_imports_from_bytecode</span><span class="p">(</span><span class="n">injected_co</span><span class="p">,</span> <span class="n">bc_import</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">import_stmt</span> <span class="ow">in</span> <span class="n">import_stmts</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_lives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_lives</span> <span class="o">|</span> <span class="n">import_stmt</span><span class="o">.</span><span class="n">live_names</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">inspect_all_globals</span><span class="p">()</span>
+
+    <span class="n">working_co</span> <span class="o">=</span> <span class="n">target_decl</span><span class="o">.</span><span class="n">code_object</span>
+
+    <span class="n">new_co</span> <span class="o">=</span> <span class="n">Merger</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">working_co</span><span class="p">,</span>
+                          <span class="n">injected_co</span><span class="p">,</span>
+                          <span class="n">location</span><span class="p">,</span>
+                          <span class="n">ins_lineno</span><span class="p">,</span>
+                          <span class="n">ins_offset</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">import_lives</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">new_co</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="n">original_co</span> <span class="o">=</span> <span class="n">target_decl</span><span class="o">.</span><span class="n">code_object</span>
+    <span class="n">target_decl</span><span class="o">.</span><span class="n">code_object</span> <span class="o">=</span> <span class="n">new_co</span>
+    <span class="n">target_decl</span><span class="o">.</span><span class="n">has_changes</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="c"># Recursively apply this to the parent cos</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">target_decl</span><span class="o">.</span><span class="n">parent</span>
+    <span class="n">original_parent</span> <span class="o">=</span> <span class="n">original_decl</span><span class="o">.</span><span class="n">parent</span>
+
+    <span class="k">while</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="c"># inspect the parent cos and update the consts for</span>
+      <span class="c"># the original to the current sub-CO</span>
+      <span class="n">parent</span><span class="o">.</span><span class="n">update_nested_code_object</span><span class="p">(</span><span class="n">original_co</span><span class="p">,</span> <span class="n">new_co</span><span class="p">)</span>
+      <span class="n">original_co</span> <span class="o">=</span> <span class="n">original_parent</span><span class="o">.</span><span class="n">code_object</span>
+      <span class="n">new_co</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">code_object</span>
+      <span class="n">original_parent</span> <span class="o">=</span> <span class="n">original_parent</span><span class="o">.</span><span class="n">parent</span>
+      <span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
+
+    <span class="k">return</span> <span class="bp">self</span>
+
+</div>
+<div class="viewcode-block" id="SimpleRewriter.insert_import"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.insert_import">[docs]</a>  <span class="k">def</span> <span class="nf">insert_import</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">import_code</span><span class="p">,</span> <span class="n">module_import</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Insert an import statement in the current bytecode. The import is added</span>
+<span class="sd">      in front of every other imports.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Insert import on: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decl</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">module_import</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_generic</span><span class="p">(</span><span class="n">import_code</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">Merger</span><span class="o">.</span><span class="n">BEFORE</span><span class="p">,</span> <span class="n">ins_import</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">global</span> <span class="n">GLOBAL_IMPORTS_ADDED</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">module_path</span> <span class="ow">in</span> <span class="n">GLOBAL_IMPORTS_ADDED</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Already added imports in </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">module_path</span><span class="p">)</span>
+        <span class="k">return</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">insert_generic</span><span class="p">(</span><span class="n">import_code</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">Merger</span><span class="o">.</span><span class="n">BEFORE</span><span class="p">,</span>
+                          <span class="n">ins_module</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">ins_import</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+      <span class="n">GLOBAL_IMPORTS_ADDED</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">module_path</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">self</span>
+
+</div>
+<div class="viewcode-block" id="SimpleRewriter.insert_enter_code"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.insert_enter_code">[docs]</a>  <span class="k">def</span> <span class="nf">insert_enter_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">python_code</span><span class="p">,</span> <span class="n">import_code</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Insert generic code at the beginning of the module. The code is wrapped</span>
+<span class="sd">      in a ``if __name__ == &#39;__main__&#39;`` statement.</span>
+
+<span class="sd">      :param python_code: The python code to compile and inject.</span>
+<span class="sd">      :param import_code: The import statements, if any, to add before the</span>
+<span class="sd">                          insertion of `python_code`. Defaults to None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_enter_exit_code</span><span class="p">(</span><span class="n">python_code</span><span class="p">,</span>
+                                       <span class="n">import_code</span><span class="p">,</span>
+                                       <span class="n">location</span><span class="o">=</span><span class="n">Merger</span><span class="o">.</span><span class="n">MODULE_ENTER</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="SimpleRewriter.insert_exit_code"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.insert_exit_code">[docs]</a>  <span class="k">def</span> <span class="nf">insert_exit_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">python_code</span><span class="p">,</span> <span class="n">import_code</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Insert generic code at the end of the module. The code is wrapped</span>
+<span class="sd">      in a ``if __name__ == &#39;__main__&#39;`` statement.</span>
+
+<span class="sd">      :param python_code: The python code to compile and inject.</span>
+<span class="sd">      :param import_code: The import statements, if any, to add before the</span>
+<span class="sd">                          insertion of `python_code`. Defaults to None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_enter_exit_code</span><span class="p">(</span><span class="n">python_code</span><span class="p">,</span>
+                                       <span class="n">import_code</span><span class="p">,</span>
+                                       <span class="n">location</span><span class="o">=</span><span class="n">Merger</span><span class="o">.</span><span class="n">MODULE_EXIT</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="SimpleRewriter.insert_enter_exit_code"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.insert_enter_exit_code">[docs]</a>  <span class="k">def</span> <span class="nf">insert_enter_exit_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">python_code</span><span class="p">,</span> <span class="n">import_code</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">Merger</span><span class="o">.</span><span class="n">MODULE_EXIT</span><span class="p">):</span>
+    <span class="n">indented_python_code</span> <span class="o">=</span> <span class="n">SimpleRewriter</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">python_code</span><span class="p">,</span> <span class="n">indent_level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">import_code</span><span class="p">:</span>
+      <span class="n">indented_import_code</span> <span class="o">=</span> <span class="n">SimpleRewriter</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">import_code</span><span class="p">,</span> <span class="n">indent_level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+      <span class="n">indented_python_code</span> <span class="o">=</span> <span class="n">indented_import_code</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">indented_python_code</span>
+
+    <span class="n">new_code</span> <span class="o">=</span> <span class="n">EXIT_ENTER_CODE_TEMPLATE</span> <span class="o">%</span> <span class="n">indented_python_code</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_generic</span><span class="p">(</span><span class="n">new_code</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="SimpleRewriter.inspect_all_globals"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.inspect_all_globals">[docs]</a>  <span class="k">def</span> <span class="nf">inspect_all_globals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">:</span>
+      <span class="k">return</span>
+    <span class="n">co_module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">code_object</span>
+    <span class="n">bc_module</span> <span class="o">=</span> <span class="n">BytecodeObject</span><span class="o">.</span><span class="n">get_parsed_code</span><span class="p">(</span><span class="n">co_module</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">bc_tpl</span> <span class="ow">in</span> <span class="n">bc_module</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">bc_tpl</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">LOAD_GLOBAL</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">import_lives</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">bc_tpl</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+</div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SimpleRewriter.indent"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.indent">[docs]</a>  <span class="k">def</span> <span class="nf">indent</span><span class="p">(</span><span class="n">original_code</span><span class="p">,</span> <span class="n">indent_level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Lousy helper that indents the supplied python code, so that it will fit under</span>
+<span class="sd">      an if statement.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_code</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">indent</span> <span class="o">=</span> <span class="s">&#39; &#39;</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">indent_level</span>
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">original_code</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">):</span>
+      <span class="n">new_code</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indent</span> <span class="o">+</span> <span class="n">l</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_code</span><span class="p">)</span>
+
+</div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SimpleRewriter.get_code_object"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.get_code_object">[docs]</a>  <span class="k">def</span> <span class="nf">get_code_object</span><span class="p">(</span><span class="n">python_code</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Actually compiles the supplied code and return the ``code_object`` to be</span>
+<span class="sd">      merged with the source ``code_object``.</span>
+
+<span class="sd">      :param python_code: The python code to compile.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">co</span> <span class="o">=</span> <span class="nb">compile</span><span class="p">(</span><span class="n">python_code</span><span class="p">,</span> <span class="s">&#39;&lt;string&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;exec&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">co</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">ex</span><span class="p">:</span>
+      <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">))</span>
+      <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Compilation error:</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">python_code</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">None</span>
+
+
+  <span class="c"># We know of some fields in KNOWN_FIELDS, and we inject them</span>
+  <span class="c"># using the format string</span></div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SimpleRewriter.format_code"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.format_code">[docs]</a>  <span class="k">def</span> <span class="nf">format_code</span><span class="p">(</span><span class="n">decl</span><span class="p">,</span> <span class="n">python_code</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Formats the supplied ``python_code`` with format string, and values listed</span>
+<span class="sd">      in `KNOWN_FIELDS`.</span>
+
+<span class="sd">      :param decl: The declaration object (e.g., ``MethodDeclaration``, ``TypeDeclaration``, etc.).</span>
+<span class="sd">      :param python_code: The python code to format.</span>
+<span class="sd">      :param location: The kind of insertion to perform (e.g., ``Merger.BEFORE``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">SimpleRewriter</span><span class="o">.</span><span class="n">get_formatting_values</span><span class="p">(</span><span class="n">decl</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">python_code</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">values</span><span class="p">)</span>
+
+</div>
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SimpleRewriter.get_formatting_values"><a class="viewcode-back" href="../../../equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.get_formatting_values">[docs]</a>  <span class="k">def</span> <span class="nf">get_formatting_values</span><span class="p">(</span><span class="n">decl</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Retrieves the dynamic values to be added in the format string. All values</span>
+<span class="sd">      are statically computed, but formal parameters (of methods) are passed by name so</span>
+<span class="sd">      it is possible to dereference them in the inserted code (same for the return value).</span>
+
+<span class="sd">      :param decl: The declaration object.</span>
+<span class="sd">      :param location: The kind of insertion to perform (e.g., ``Merger.BEFORE``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">values</span><span class="p">[</span><span class="s">&#39;lineno&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">decl</span><span class="o">.</span><span class="n">start_lineno</span>
+    <span class="n">values</span><span class="p">[</span><span class="s">&#39;file_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">decl</span><span class="o">.</span><span class="n">parent_module</span><span class="o">.</span><span class="n">module_path</span><span class="p">)</span> \
+                          <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decl</span><span class="p">,</span> <span class="n">ModuleDeclaration</span><span class="p">)</span> \
+                          <span class="k">else</span> <span class="n">decl</span><span class="o">.</span><span class="n">module_path</span>
+    <span class="n">values</span><span class="p">[</span><span class="s">&#39;class_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">decl</span><span class="o">.</span><span class="n">parent_class</span><span class="o">.</span><span class="n">type_name</span> \
+                           <span class="k">if</span> <span class="n">decl</span><span class="o">.</span><span class="n">parent_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> \
+                           <span class="k">else</span> <span class="bp">None</span>
+
+    <span class="c"># Method specific arguments</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decl</span><span class="p">,</span> <span class="n">MethodDeclaration</span><span class="p">):</span>
+      <span class="n">values</span><span class="p">[</span><span class="s">&#39;method_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">decl</span><span class="o">.</span><span class="n">method_name</span>
+      <span class="n">values</span><span class="p">[</span><span class="s">&#39;arguments&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">decl</span><span class="o">.</span><span class="n">formal_parameters</span><span class="p">)</span> <span class="k">if</span> <span class="n">decl</span><span class="o">.</span><span class="n">formal_parameters</span> <span class="k">else</span> <span class="bp">None</span>
+      <span class="n">values</span><span class="p">[</span><span class="s">&#39;return_value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RETURN_CANARY_NAME</span> <span class="k">if</span> <span class="n">location</span> <span class="o">==</span> <span class="n">Merger</span><span class="o">.</span><span class="n">AFTER</span> <span class="k">else</span> <span class="bp">None</span>
+
+      <span class="n">args</span> <span class="o">=</span> <span class="n">decl</span><span class="o">.</span><span class="n">formal_parameters</span>
+      <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">arg_cnt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">arg_cnt</span> <span class="o">&gt;=</span> <span class="n">length</span><span class="p">:</span>
+          <span class="n">values</span><span class="p">[</span><span class="s">&#39;arg</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">arg_cnt</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">values</span><span class="p">[</span><span class="s">&#39;arg</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">arg_cnt</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="n">arg_cnt</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">values</span>
+</pre></div></div></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Romain Gaucher.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

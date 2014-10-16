@@ -1,0 +1,975 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>equip.visitors package &mdash; equip 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="equip 0.1 documentation" href="index.html"/>
+        <link rel="up" title="equip package" href="equip.html"/>
+        <link rel="prev" title="equip.utils package" href="equip.utils.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> equip</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#current-limitations">Current Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#virtualenv">virtualenv</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#instrument">Instrument</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#visitors">Visitors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#simplerewriter">SimpleRewriter</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="equip.html">equip package</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">equip</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="api.html">API</a> &raquo;</li>
+      
+          <li><a href="equip.html">equip package</a> &raquo;</li>
+      
+    <li>equip.visitors package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/equip.visitors.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="equip-visitors-package">
+<h1>equip.visitors package<a class="headerlink" href="#equip-visitors-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-equip.visitors.bytecode">
+<span id="submodules"></span><h2>Submodules<a class="headerlink" href="#module-equip.visitors.bytecode" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="equip-visitors-bytecode">
+<h3>equip.visitors.bytecode<a class="headerlink" href="#equip-visitors-bytecode" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div>Callback the visitor method for each encountered opcode.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">copyright:</th><td class="field-body"><ol class="first loweralpha simple" start="3">
+<li>2014 by Romain Gaucher (&#64;rgaucher)</li>
+</ol>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">license:</th><td class="field-body"><p class="first last">Apache 2, see LICENSE for more details.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="equip.visitors.bytecode.BytecodeVisitor">
+<em class="property">class </em><tt class="descclassname">equip.visitors.bytecode.</tt><tt class="descname">BytecodeVisitor</tt><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A visitor to visit each instruction in the bytecode. For example,
+the following code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">CallFunctionVisitor</span><span class="p">(</span><span class="n">BytecodeVisitor</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">BytecodeVisitor</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">visit_call_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparg</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">&quot;Function call with </span><span class="si">%d</span><span class="s"> args&quot;</span> <span class="o">%</span> <span class="n">oparg</span>
+</pre></div>
+</div>
+<p>Prints whenever a <tt class="docutils literal"><span class="pre">CALL_FUNCTION</span></tt> opcode is visited and prints out
+its number of arguments (the oparg for this opcode).</p>
+<dl class="staticmethod">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.toMethodName">
+<em class="property">static </em><tt class="descname">toMethodName</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.toMethodName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.toMethodName" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit">
+<tt class="descname">visit</tt><big>(</big><em>index</em>, <em>op</em>, <em>arg=None</em>, <em>lineno=None</em>, <em>cflow_in=False</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Callback of the visitor. It dynamically constructs the name
+of the specialized visitor to call based on the name of the opcode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>index</strong> &#8211; Bytecode index.</li>
+<li><strong>op</strong> &#8211; The opcode that is currently visited.</li>
+<li><strong>arg</strong> &#8211; The expanded oparg (i.e., constants, names, etc. are resolved).</li>
+<li><strong>lineno</strong> &#8211; The line number associated with the opcode.</li>
+<li><strong>cflow_in</strong> &#8211; <tt class="docutils literal"><span class="pre">True</span></tt> if the current <tt class="docutils literal"><span class="pre">index</span></tt> is the target of a jump.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_add">
+<tt class="descname">visit_binary_add</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_and">
+<tt class="descname">visit_binary_and</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_and"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_and" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_divide">
+<tt class="descname">visit_binary_divide</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_divide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_divide" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_floor_divide">
+<tt class="descname">visit_binary_floor_divide</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_floor_divide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_floor_divide" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_lshift">
+<tt class="descname">visit_binary_lshift</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_lshift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_lshift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_modulo">
+<tt class="descname">visit_binary_modulo</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_modulo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_modulo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_multiply">
+<tt class="descname">visit_binary_multiply</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_multiply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_multiply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_or">
+<tt class="descname">visit_binary_or</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_or"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_or" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_power">
+<tt class="descname">visit_binary_power</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_power" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_rshift">
+<tt class="descname">visit_binary_rshift</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_rshift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_rshift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_subscr">
+<tt class="descname">visit_binary_subscr</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_subscr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_subscr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_subtract">
+<tt class="descname">visit_binary_subtract</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_subtract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_subtract" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_true_divide">
+<tt class="descname">visit_binary_true_divide</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_true_divide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_true_divide" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_binary_xor">
+<tt class="descname">visit_binary_xor</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_binary_xor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_binary_xor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_break_loop">
+<tt class="descname">visit_break_loop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_break_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_break_loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_build_class">
+<tt class="descname">visit_build_class</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_build_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_build_class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_build_list">
+<tt class="descname">visit_build_list</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_build_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_build_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_build_map">
+<tt class="descname">visit_build_map</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_build_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_build_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_build_set">
+<tt class="descname">visit_build_set</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_build_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_build_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_build_slice">
+<tt class="descname">visit_build_slice</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_build_slice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_build_slice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_build_tuple">
+<tt class="descname">visit_build_tuple</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_build_tuple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_build_tuple" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_call_function">
+<tt class="descname">visit_call_function</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_call_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_call_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_call_function_kw">
+<tt class="descname">visit_call_function_kw</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_call_function_kw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_call_function_kw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_call_function_var">
+<tt class="descname">visit_call_function_var</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_call_function_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_call_function_var" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_call_function_var_kw">
+<tt class="descname">visit_call_function_var_kw</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_call_function_var_kw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_call_function_var_kw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_compare_op">
+<tt class="descname">visit_compare_op</tt><big>(</big><em>compare</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_compare_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_compare_op" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_continue_loop">
+<tt class="descname">visit_continue_loop</tt><big>(</big><em>jump_abs</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_continue_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_continue_loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_delete_attr">
+<tt class="descname">visit_delete_attr</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_delete_attr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_delete_attr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_delete_fast">
+<tt class="descname">visit_delete_fast</tt><big>(</big><em>local</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_delete_fast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_delete_fast" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_delete_global">
+<tt class="descname">visit_delete_global</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_delete_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_delete_global" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_delete_name">
+<tt class="descname">visit_delete_name</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_delete_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_delete_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_0">
+<tt class="descname">visit_delete_slice_0</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_delete_slice_0"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_1">
+<tt class="descname">visit_delete_slice_1</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_delete_slice_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_2">
+<tt class="descname">visit_delete_slice_2</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_delete_slice_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_3">
+<tt class="descname">visit_delete_slice_3</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_delete_slice_3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_delete_slice_3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_delete_subscr">
+<tt class="descname">visit_delete_subscr</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_delete_subscr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_delete_subscr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_dup_top">
+<tt class="descname">visit_dup_top</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_dup_top"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_dup_top" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_dup_topx">
+<tt class="descname">visit_dup_topx</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_dup_topx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_dup_topx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_end_finally">
+<tt class="descname">visit_end_finally</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_end_finally"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_end_finally" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_exec_stmt">
+<tt class="descname">visit_exec_stmt</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_exec_stmt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_exec_stmt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_extended_arg">
+<tt class="descname">visit_extended_arg</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_extended_arg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_extended_arg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_for_iter">
+<tt class="descname">visit_for_iter</tt><big>(</big><em>jump_rel</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_for_iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_for_iter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_get_iter">
+<tt class="descname">visit_get_iter</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_get_iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_get_iter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_import_from">
+<tt class="descname">visit_import_from</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_import_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_import_from" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_import_name">
+<tt class="descname">visit_import_name</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_import_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_import_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_import_star">
+<tt class="descname">visit_import_star</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_import_star"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_import_star" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_add">
+<tt class="descname">visit_inplace_add</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_and">
+<tt class="descname">visit_inplace_and</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_and"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_and" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_divide">
+<tt class="descname">visit_inplace_divide</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_divide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_divide" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_floor_divide">
+<tt class="descname">visit_inplace_floor_divide</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_floor_divide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_floor_divide" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_lshift">
+<tt class="descname">visit_inplace_lshift</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_lshift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_lshift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_modulo">
+<tt class="descname">visit_inplace_modulo</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_modulo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_modulo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_multiply">
+<tt class="descname">visit_inplace_multiply</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_multiply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_multiply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_or">
+<tt class="descname">visit_inplace_or</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_or"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_or" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_power">
+<tt class="descname">visit_inplace_power</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_power" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_rshift">
+<tt class="descname">visit_inplace_rshift</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_rshift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_rshift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_subtract">
+<tt class="descname">visit_inplace_subtract</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_subtract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_subtract" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_true_divide">
+<tt class="descname">visit_inplace_true_divide</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_true_divide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_true_divide" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_inplace_xor">
+<tt class="descname">visit_inplace_xor</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_inplace_xor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_inplace_xor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_jump_absolute">
+<tt class="descname">visit_jump_absolute</tt><big>(</big><em>jump_abs</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_jump_absolute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_jump_absolute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_jump_forward">
+<tt class="descname">visit_jump_forward</tt><big>(</big><em>jump_rel</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_jump_forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_jump_forward" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_jump_if_false_or_pop">
+<tt class="descname">visit_jump_if_false_or_pop</tt><big>(</big><em>jump_abs</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_jump_if_false_or_pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_jump_if_false_or_pop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_jump_if_true_or_pop">
+<tt class="descname">visit_jump_if_true_or_pop</tt><big>(</big><em>jump_abs</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_jump_if_true_or_pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_jump_if_true_or_pop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_list_append">
+<tt class="descname">visit_list_append</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_list_append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_list_append" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_load_attr">
+<tt class="descname">visit_load_attr</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_load_attr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_load_attr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_load_closure">
+<tt class="descname">visit_load_closure</tt><big>(</big><em>free</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_load_closure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_load_closure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_load_const">
+<tt class="descname">visit_load_const</tt><big>(</big><em>constant</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_load_const"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_load_const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_load_deref">
+<tt class="descname">visit_load_deref</tt><big>(</big><em>free</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_load_deref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_load_deref" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_load_fast">
+<tt class="descname">visit_load_fast</tt><big>(</big><em>local</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_load_fast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_load_fast" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_load_global">
+<tt class="descname">visit_load_global</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_load_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_load_global" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_load_locals">
+<tt class="descname">visit_load_locals</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_load_locals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_load_locals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_load_name">
+<tt class="descname">visit_load_name</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_load_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_load_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_make_closure">
+<tt class="descname">visit_make_closure</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_make_closure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_make_closure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_make_function">
+<tt class="descname">visit_make_function</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_make_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_make_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_map_add">
+<tt class="descname">visit_map_add</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_map_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_map_add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_nop">
+<tt class="descname">visit_nop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_nop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_nop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_pop_block">
+<tt class="descname">visit_pop_block</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_pop_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_pop_block" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_pop_jump_if_false">
+<tt class="descname">visit_pop_jump_if_false</tt><big>(</big><em>jump_abs</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_pop_jump_if_false"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_pop_jump_if_false" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_pop_jump_if_true">
+<tt class="descname">visit_pop_jump_if_true</tt><big>(</big><em>jump_abs</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_pop_jump_if_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_pop_jump_if_true" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_pop_top">
+<tt class="descname">visit_pop_top</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_pop_top"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_pop_top" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_print_expr">
+<tt class="descname">visit_print_expr</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_print_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_print_expr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_print_item">
+<tt class="descname">visit_print_item</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_print_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_print_item" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_print_item_to">
+<tt class="descname">visit_print_item_to</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_print_item_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_print_item_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_print_newline">
+<tt class="descname">visit_print_newline</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_print_newline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_print_newline" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_print_newline_to">
+<tt class="descname">visit_print_newline_to</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_print_newline_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_print_newline_to" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_raise_varargs">
+<tt class="descname">visit_raise_varargs</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_raise_varargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_raise_varargs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_return_value">
+<tt class="descname">visit_return_value</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_return_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_return_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_rot_four">
+<tt class="descname">visit_rot_four</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_rot_four"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_rot_four" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_rot_three">
+<tt class="descname">visit_rot_three</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_rot_three"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_rot_three" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_rot_two">
+<tt class="descname">visit_rot_two</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_rot_two"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_rot_two" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_set_add">
+<tt class="descname">visit_set_add</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_set_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_set_add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_setup_except">
+<tt class="descname">visit_setup_except</tt><big>(</big><em>jump_rel</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_setup_except"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_setup_except" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_setup_finally">
+<tt class="descname">visit_setup_finally</tt><big>(</big><em>jump_rel</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_setup_finally"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_setup_finally" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_setup_loop">
+<tt class="descname">visit_setup_loop</tt><big>(</big><em>jump_rel</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_setup_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_setup_loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_setup_with">
+<tt class="descname">visit_setup_with</tt><big>(</big><em>jump_rel</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_setup_with"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_setup_with" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_slice_0">
+<tt class="descname">visit_slice_0</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_slice_0"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_slice_0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_slice_1">
+<tt class="descname">visit_slice_1</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_slice_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_slice_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_slice_2">
+<tt class="descname">visit_slice_2</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_slice_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_slice_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_slice_3">
+<tt class="descname">visit_slice_3</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_slice_3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_slice_3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_stop_code">
+<tt class="descname">visit_stop_code</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_stop_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_stop_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_attr">
+<tt class="descname">visit_store_attr</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_attr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_attr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_deref">
+<tt class="descname">visit_store_deref</tt><big>(</big><em>free</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_deref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_deref" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_fast">
+<tt class="descname">visit_store_fast</tt><big>(</big><em>local</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_fast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_fast" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_global">
+<tt class="descname">visit_store_global</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_global" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_map">
+<tt class="descname">visit_store_map</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_name">
+<tt class="descname">visit_store_name</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_0">
+<tt class="descname">visit_store_slice_0</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_slice_0"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_1">
+<tt class="descname">visit_store_slice_1</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_slice_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_2">
+<tt class="descname">visit_store_slice_2</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_slice_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_3">
+<tt class="descname">visit_store_slice_3</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_slice_3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_slice_3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_store_subscr">
+<tt class="descname">visit_store_subscr</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_store_subscr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_store_subscr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_unary_convert">
+<tt class="descname">visit_unary_convert</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_unary_convert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_unary_convert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_unary_invert">
+<tt class="descname">visit_unary_invert</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_unary_invert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_unary_invert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_unary_negative">
+<tt class="descname">visit_unary_negative</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_unary_negative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_unary_negative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_unary_not">
+<tt class="descname">visit_unary_not</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_unary_not"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_unary_not" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_unary_positive">
+<tt class="descname">visit_unary_positive</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_unary_positive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_unary_positive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_unpack_sequence">
+<tt class="descname">visit_unpack_sequence</tt><big>(</big><em>oparg</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_unpack_sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_unpack_sequence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_with_cleanup">
+<tt class="descname">visit_with_cleanup</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_with_cleanup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_with_cleanup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="equip.visitors.bytecode.BytecodeVisitor.visit_yield_value">
+<tt class="descname">visit_yield_value</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/equip/visitors/bytecode.html#BytecodeVisitor.visit_yield_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.bytecode.BytecodeVisitor.visit_yield_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-equip.visitors.classes"></span><div class="section" id="equip-visitors-classes">
+<h3>equip.visitors.classes<a class="headerlink" href="#equip-visitors-classes" title="Permalink to this headline">¶</a></h3>
+<p>Callback the visit method for each encountered class in the program.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">copyright:</th><td class="field-body"><ol class="first loweralpha simple" start="3">
+<li>2014 by Romain Gaucher (&#64;rgaucher)</li>
+</ol>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">license:</th><td class="field-body"><p class="first last">Apache 2, see LICENSE for more details.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="equip.visitors.classes.ClassVisitor">
+<em class="property">class </em><tt class="descclassname">equip.visitors.classes.</tt><tt class="descname">ClassVisitor</tt><a class="reference internal" href="_modules/equip/visitors/classes.html#ClassVisitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.classes.ClassVisitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A class visitor that is triggered for all encountered <tt class="docutils literal"><span class="pre">TypeDeclaration</span></tt>.</p>
+<p>Example, listing all types declared in the bytecode:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">TypeDeclVisitor</span><span class="p">(</span><span class="n">ClassVisitor</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">ClassVisitor</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">typeDecl</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">&quot;New type: </span><span class="si">%s</span><span class="s"> (parentDecl=</span><span class="si">%s</span><span class="s">)&quot;</span> \
+          <span class="o">%</span> <span class="p">(</span><span class="n">typeDecl</span><span class="o">.</span><span class="n">type_name</span><span class="p">,</span> <span class="n">typeDecl</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="equip.visitors.classes.ClassVisitor.visit">
+<tt class="descname">visit</tt><big>(</big><em>typeDecl</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/classes.html#ClassVisitor.visit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.classes.ClassVisitor.visit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-equip.visitors.methods"></span><div class="section" id="equip-visitors-methods">
+<h3>equip.visitors.methods<a class="headerlink" href="#equip-visitors-methods" title="Permalink to this headline">¶</a></h3>
+<p>Callback the visit method for each encountered method in the program.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">copyright:</th><td class="field-body"><ol class="first loweralpha simple" start="3">
+<li>2014 by Romain Gaucher (&#64;rgaucher)</li>
+</ol>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">license:</th><td class="field-body"><p class="first last">Apache 2, see LICENSE for more details.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="equip.visitors.methods.MethodVisitor">
+<em class="property">class </em><tt class="descclassname">equip.visitors.methods.</tt><tt class="descname">MethodVisitor</tt><a class="reference internal" href="_modules/equip/visitors/methods.html#MethodVisitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.methods.MethodVisitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A method visitor that is triggered for all encountered <tt class="docutils literal"><span class="pre">MethodDeclaration</span></tt>.</p>
+<p>Example, listing all methods declared in the bytecode:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MethodDeclVisitor</span><span class="p">(</span><span class="n">MethodVisitor</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">MethodVisitor</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">methDecl</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">&quot;New method: </span><span class="si">%s</span><span class="s">:</span><span class="si">%d</span><span class="s"> (parentDecl=</span><span class="si">%s</span><span class="s">)&quot;</span> \
+          <span class="o">%</span> <span class="p">(</span><span class="n">methDecl</span><span class="o">.</span><span class="n">method_name</span><span class="p">,</span> <span class="n">methDecl</span><span class="o">.</span><span class="n">start_lineno</span><span class="p">,</span> <span class="n">methDecl</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="equip.visitors.methods.MethodVisitor.visit">
+<tt class="descname">visit</tt><big>(</big><em>methodDecl</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/methods.html#MethodVisitor.visit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.methods.MethodVisitor.visit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-equip.visitors.modules"></span><div class="section" id="equip-visitors-modules">
+<h3>equip.visitors.modules<a class="headerlink" href="#equip-visitors-modules" title="Permalink to this headline">¶</a></h3>
+<p>Callback the visit method for each encountered module in the program.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">copyright:</th><td class="field-body"><ol class="first loweralpha simple" start="3">
+<li>2014 by Romain Gaucher (&#64;rgaucher)</li>
+</ol>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">license:</th><td class="field-body"><p class="first last">Apache 2, see LICENSE for more details.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="equip.visitors.modules.ModuleVisitor">
+<em class="property">class </em><tt class="descclassname">equip.visitors.modules.</tt><tt class="descname">ModuleVisitor</tt><a class="reference internal" href="_modules/equip/visitors/modules.html#ModuleVisitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.modules.ModuleVisitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="equip.visitors.modules.ModuleVisitor.visit">
+<tt class="descname">visit</tt><big>(</big><em>moduleDecl</em><big>)</big><a class="reference internal" href="_modules/equip/visitors/modules.html#ModuleVisitor.visit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#equip.visitors.modules.ModuleVisitor.visit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-equip.visitors">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-equip.visitors" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="equip-visitors">
+<h3>equip.visitors<a class="headerlink" href="#equip-visitors" title="Permalink to this headline">¶</a></h3>
+<p>Different visitor interfaces to traverse the bytecode, modules,
+classes, or methods.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">copyright:</th><td class="field-body"><ol class="first loweralpha simple" start="3">
+<li>2014 by Romain Gaucher (&#64;rgaucher)</li>
+</ol>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">license:</th><td class="field-body"><p class="first last">Apache 2, see LICENSE for more details.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="equip.utils.html" class="btn btn-neutral" title="equip.utils package"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Romain Gaucher.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
