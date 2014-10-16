@@ -77,6 +77,27 @@ to be written and code cleanup to be made before equip can be considered as reli
 When it is reliable, it will be bumped to version 1.0.
 
 ## Current Capabilities of Equip
-The API of equip is fairly high level and it's possible not to use the simple ``Instrument`` interface
-in order to manually retrieve ``Declaration`` found in the bytecode. Then rewrite them manually.
+The API of equip is fairly high level and it's possible not to use the simple `Instrument` interface
+in order to manually retrieve `Declaration` found in the bytecode. Then rewrite them manually. A 
+`BytecodeVisitor` is also provided to iterate over all the bytecode (however, no rewriter is currently
+available to easily append one instruction at a time).
+
+### Bytecode Injection
+The current way to inject custom code in the original bytecode is handled by the [`SimpleRewriter`](http://equip.readthedocs.org/en/latest/equip.rewriter.html#equip.rewriter.simple.SimpleRewriter).
+It allows for injections in multiple parts:
+ * BEFORE: before any other bytecode
+ * AFTER: just before each `RETURN_VALUE`
+ * LINENO: when a given line number is encountered
+ * MODULE_ENTER: at the very beginning of a module (wrapped in a `if __name__ == '__main__'`)
+ * MODULE_EXIT: at the very end of a module (wrapped in a `if __name__ == '__main__'`)
+
+Specific methods are available to handle these injection, for which the first step is to process the code to be
+injected to replace the templated values (e.g., `{return_value}`, `{arguments}`, etc.) and then compile the code.
+
+The compiled code is what will be injected in the original bytecode.
+
+Since the code might have external dependencies, it is possible to add new import statements (which are written
+in the module), using [`SimpleRewriter.insert_import`](http://equip.readthedocs.org/en/latest/equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.insert_import)
+
+
 
