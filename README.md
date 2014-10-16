@@ -50,6 +50,10 @@ Running the instrumented program afterwards does not require anything but execut
 would usually do. If the injected code has external dependencies, you can simply modify the
 `PYTHONPATH` to point to the required modules.
 
+A more realistic example can be found in the examples:
+  * [Call counters](https://github.com/neuroo/equip/blob/master/examples/counter/counter_instrument.py): Instrument a program and record calls for each method during its execution. The output is then serialized to JSON.
+
+
 ## Installation
 You can manually install equip:
 
@@ -61,3 +65,14 @@ $ python setup.py install
 
 ## Documentation
 The documentation is available on http://equip.readthedocs.org
+
+## Versioning and Experimental Status
+The current status of equip should be considered experimental. There is much more tests
+to be written and code cleanup to be made before equip can be considered as reliable.
+
+When it is reliable, it will be bumped to version 1.0.
+
+## Current Capabilities of Equip
+The API of equip is fairly high level and it's possible not to use the simple ``Instrument`` interface
+in order to manually retrieve ``Declaration`` found in the bytecode. Then rewrite them manually.
+
