@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/neuroo/equip.svg?branch=master)](https://travis-ci.org/neuroo/equip) [![Documentation Status](https://readthedocs.org/projects/equip/badge/?version=latest)](https://readthedocs.org/projects/equip/?badge=latest)
+
 # equip: Python Bytecode Instrumentation
 
 equip is a small library that helps with Python bytecode instrumentation. Its API
