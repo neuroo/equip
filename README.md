@@ -106,8 +106,8 @@ in the module), using [`SimpleRewriter.insert_import`](http://equip.readthedocs.
 ### Bytecode Analysis
 For smarter instrumentation, you often need to perform lightweight analysis of the bytecode. equip provides 
 some capabilities in this domain with:
- * Construction of the control flow graph (associated with one `Declaration`)
- * Dominance properties are also computed (dominator tree, post-dominators, dominance frontier)
+ * Construction of the [`ControlFlow`](http://equip.readthedocs.org/en/latest/equip.analysis.html#equip.analysis.flow.ControlFlow) graph (associated with one `Declaration`)
+ * Dominance properties are also computed (dominator tree, post-dominators, dominance frontier) and provided by the [`DominatorTree`](http://equip.readthedocs.org/en/latest/equip.analysis.graph.html#equip.analysis.graph.dominators.DominatorTree) utility
  * Traversals to help with searching the CFG
 
  
