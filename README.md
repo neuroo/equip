@@ -82,6 +82,10 @@ in order to manually retrieve `Declaration` found in the bytecode. Then rewrite 
 `BytecodeVisitor` is also provided to iterate over all the bytecode (however, no rewriter is currently
 available to easily append one instruction at a time).
 
+Another part of the API in equip allow for reasoning about the python bytecode (currently, with control
+flow analysis).
+
+
 ### Bytecode Injection
 The current way to inject custom code in the original bytecode is handled by the [`SimpleRewriter`](http://equip.readthedocs.org/en/latest/equip.rewriter.html#equip.rewriter.simple.SimpleRewriter).
 It allows for injections in multiple parts:
@@ -99,5 +103,13 @@ The compiled code is what will be injected in the original bytecode.
 Since the code might have external dependencies, it is possible to add new import statements (which are written
 in the module), using [`SimpleRewriter.insert_import`](http://equip.readthedocs.org/en/latest/equip.rewriter.html#equip.rewriter.simple.SimpleRewriter.insert_import)
 
+### Bytecode Analysis
+For smarter instrumentation, you often need to perform lightweight analysis of the bytecode. equip provides 
+some capabilities in this domain with:
+ * Construction of the control flow graph (associated with one `Declaration`)
+ * Dominance properties are also computed (dominator tree, post-dominators, dominance frontier)
+ * Traversals to help with searching the CFG
 
+ 
+ 
 
