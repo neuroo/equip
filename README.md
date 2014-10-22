@@ -10,12 +10,12 @@ bytecode of the program to be instrumented. However, the developer does not need
 anything about the Python bytecode since the injected code is Python source.
 
 ## Installation
-The package can be installed with pip:
+The package can be installed with pip for the latest release:
 ```bash
 $ pip install equip
 ```
 
-Or you can manually install it:
+Or you can get/install the latest development version:
 ```bash
 $ git clone https://github.com/neuroo/equip.git
 $ cd equip
