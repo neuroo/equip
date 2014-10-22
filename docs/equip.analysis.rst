@@ -1,26 +1,22 @@
-equip package
-=============
+equip.analysis package
+======================
 
 Subpackages
 -----------
 
 .. toctree::
 
-    equip.analysis
-    equip.bytecode
-    equip.rewriter
-    equip.utils
-    equip.visitors
+    equip.analysis.graph
 
 Submodules
 ----------
 
-.. automodule:: equip.instrument
+.. automodule:: equip.analysis.block
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. automodule:: equip.prog
+.. automodule:: equip.analysis.flow
     :members:
     :undoc-members:
     :show-inheritance:
@@ -29,7 +25,7 @@ Submodules
 Module contents
 ---------------
 
-.. automodule:: equip
+.. automodule:: equip.analysis
     :members:
     :undoc-members:
     :show-inheritance:

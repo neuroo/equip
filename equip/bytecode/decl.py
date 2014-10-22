@@ -75,7 +75,7 @@ class Declaration(object):
 
   @parent.setter
   def parent(self, value):
-    logger.debug("Set parent. %s", value)
+    # logger.debug("Set parent. %s", value)
     self._parent = value
     self._parent.add_child(self)
 
@@ -93,7 +93,7 @@ class Declaration(object):
       :param child: A ``Declaration`` that is a child of the current declaration.
     """
     self._children.append(child)
-    logger.debug("add_child:: Children: %s", self.children)
+    # logger.debug("add_child:: Children: %s", self.children)
     # Keep sorting by line number
     self._children = sorted(self._children, key=methodcaller('get_start_lineno'))
 
@@ -390,7 +390,6 @@ class MethodDeclaration(Declaration):
   def __init__(self, method_name, code_object):
     Declaration.__init__(self, Declaration.METHOD, code_object)
     self._method_name = method_name
-
     self._formal_parameters = []
     self._body = None
     self._labels = dis.findlabels(code_object.co_code)
@@ -407,6 +406,10 @@ class MethodDeclaration(Declaration):
   @property
   def labels(self):
     return self._labels
+
+  @property
+  def is_lambda(self):
+    return self.method_name == '<lambda>'
 
   @property
   def formal_parameters(self):

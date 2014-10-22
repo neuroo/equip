@@ -55,19 +55,22 @@ def show_bytecode(bytecode, start=0, end=2**32):
   end = min(end, len(bytecode) - 1)
   while j <= end:
     index, lineno, op, arg, _, co = bytecode[j]
+    uid = hex(id(co))[-5:]
+
     if op >= opcode.HAVE_ARGUMENT:
       rts = repr(arg)
-      if len(rts) > 30:
-        rts = rts[:30] + '[...]'
+      if len(rts) > 40:
+        rts = rts[:40] + '[...]'
       jump_target = ''
-      if op in opcode.hasjrel:
-        jump_target = ' -------------> (%3d)' % (index + arg + 3)
+      if op in opcode.hasjrel or op in opcode.hasjabs:
+        jump_address = arg if op in hasjabs else index + arg + 3
+        jump_target = ' -------------> (%3d)' % jump_address
 
-      buffer.append("%3d(%3d) %20s(%3d) (%s)%s"
-                    % (lineno, index, opcode.opname[op], op, rts, jump_target))
+      buffer.append("[%5s]%3d(%3d) %20s(%3d) (%s)%s"
+                    % (uid, lineno, index, opcode.opname[op], op, rts, jump_target))
     else:
-      buffer.append("%3d(%3d) %20s(%3d)"
-                    % (lineno, index, opcode.opname[op], op))
+      buffer.append("[%5s]%3d(%3d) %20s(%3d)"
+                    % (uid, lineno, index, opcode.opname[op], op))
     j += 1
   return '\n'.join(buffer)
 

@@ -9,7 +9,7 @@
   :license: Apache 2, see LICENSE for more details.
 """
 
-__version__ = '0.1'
+__version__ = '0.1.a'
 
 import sys
 
@@ -21,6 +21,7 @@ if sys.version_info.major != 2 and sys.version_info.minor != 7:
 
 from .prog import Program
 from .instrument import Instrumentation
+from .analysis import ControlFlow
 from .bytecode import BytecodeObject
 from .rewriter import SimpleRewriter
 from .visitors import MethodVisitor, \

@@ -59,8 +59,9 @@ LOAD_ATTR = 106
 IMPORT_NAME = 108
 IMPORT_FROM = 109
 STORE_FAST = 125
+CALL_FUNCTION = 131
 MAKE_FUNCTION = 132
-
+MAKE_CLOSURE = 134
 
 class BytecodeObject(object):
   """
@@ -100,7 +101,15 @@ class BytecodeObject(object):
     self.magic = fd.read(4)
     self.moddate = fd.read(4)
     self.modif_date = long(struct.unpack('<l', self.moddate)[0])
-    self.code = marshal.load(fd)
+    co = marshal.load(fd)
+    self.parse_code(co)
+
+
+  def parse_code(self, co):
+    """
+      Parses a Python code object. Mostly useful for testing.
+    """
+    self.code = co
     self.bytecode = []
 
     try:
@@ -291,6 +300,8 @@ class BytecodeObject(object):
     self.all_decls = set()
     decl_map = {}
 
+    # logger.debug("Bytecode:\n%s", show_bytecode(self.bytecode))
+
     class_decl_indices, method_decl_indices = BytecodeObject.find_classes_methods(self.bytecode)
     interest_indices = class_decl_indices.union(method_decl_indices)
 
@@ -304,6 +315,8 @@ class BytecodeObject(object):
     BytecodeObject.parse_imports(self.main_module, self.bytecode)
     decl_map[module_lines] = self.main_module
     decl_counter += 1
+
+    self.all_decls.add(self.main_module)
 
     for tpl_indices in interest_indices:
       decl = None
@@ -330,31 +343,60 @@ class BytecodeObject(object):
       decl_map[lines_tuple] = decl
       decl_counter += 1
 
-    # Process parenting
-    decl_map_items = decl_map.keys()
-    decl_map_items = sorted(decl_map_items, key=operator.itemgetter(2), reverse=True)
-    for lines_tuple in decl_map_items:
-      candidates = list()
-      for ltpl in decl_map:
-        if (ltpl[0] < lines_tuple[0] or lines_tuple[0] == 1 == ltpl[0]) \
-        and ltpl[1] >= lines_tuple[1] \
-        and ltpl[2] != lines_tuple[2]:
-          candidates.append(ltpl)
 
-      if candidates:
-        # Minimize the differences
-        candidates = sorted(candidates, cmp=lambda t1, t2: (t1[1] - t1[0]) - (t2[1] - t2[0]))
-        best_candidate = candidates[0]
+    co_deps_graph = {
+      self.main_module.code_object : {}
+    }
 
-        child_elmt = decl_map[lines_tuple]
-        parent_elmt = decl_map[best_candidate]
-        # Check that we don't have a recursive parent/child (e.g. a module with just one function)
-        if parent_elmt.parent == child_elmt or child_elmt.parent == parent_elmt:
-          continue
-        child_elmt.parent = parent_elmt
-        logger.debug("Parent %s <- Child %s", parent_elmt, child_elmt)
+    i, length = 0, len(self.bytecode)
+    while i < length:
+      op, arg, co = self.bytecode[i][2], self.bytecode[i][3], self.bytecode[i][5]
+      if op == LOAD_CONST and isinstance(arg, types.CodeType):
+        if co not in co_deps_graph:
+          co_deps_graph[co] = dict()
+        if arg not in co_deps_graph[co]:
+          co_deps_graph[co][arg] = dict()
 
-    logger.debug(BytecodeObject.build_tree(self.main_module))
+          decl_parent = self.get_decl(code_object=co)
+          decl_child = self.get_decl(code_object=arg)
+          decl_child.parent = decl_parent
+      i += 1
+
+    logger.debug('\n' + BytecodeObject.build_tree(self.main_module))
+
+
+  def get_decl(self, code_object=None, method_name=None, type_name=None):
+    """
+      Returns the declaration associated to the code_object ``co``, or supplied
+      name.
+
+      Warning: This is only valid until the rewriter is called on the declarations.
+
+      :param code_object: Python code object type
+      :param method_name: Name of the method.
+      :param type_name: Name of the type.
+    """
+    if code_object is not None:
+      for decl in self.declarations:
+        if decl.code_object == code_object:
+          return decl
+    elif method_name is not None:
+      results = []
+      for decl in self.declarations:
+        if isinstance(decl, MethodDeclaration) and decl.method_name == method_name:
+          results.append(decl)
+      if not results:
+        return None
+      return results[0] if len(results) == 1 else results
+    elif type_name is not None:
+      results = []
+      for decl in self.declarations:
+        if isinstance(decl, TypeDeclaration) and decl.type_name == type_name:
+          results.append(decl)
+      if not results:
+        return None
+      return results[0] if len(results) == 1 else results
+    return None
 
 
   @staticmethod
@@ -378,7 +420,7 @@ class BytecodeObject(object):
   def next_code_object(bytecode, index):
     i = index
     while i < len(bytecode):
-      co = bytecode[i][3]
+      co = bytecode[i][5]
       if isinstance(co, types.CodeType):
         return co
       i += 1
@@ -389,7 +431,7 @@ class BytecodeObject(object):
   def prev_code_object(bytecode, index):
     i = index
     while i <= 0:
-      co = bytecode[i][3]
+      co = bytecode[i][5]
       if isinstance(co, types.CodeType):
         return co
       i -= 1
@@ -399,8 +441,8 @@ class BytecodeObject(object):
   @staticmethod
   def find_classes_methods(bytecode):
     """
-      Finds the indices of the clases and methods declared in the bytecode. This is done
-      by matching line numbers of the declaration and the ``MAKE_FUNCTION`` or ``BUILD_CLASS``
+      Finds the indices of the classes and methods declared in the bytecode. This is done
+      by matching code_object of the declaration and the ``MAKE_FUNCTION`` or ``BUILD_CLASS``
       opcode.
     """
     class_indices = set()
@@ -408,57 +450,50 @@ class BytecodeObject(object):
     class_lines = set()
     method_lines = set()
 
-    for tpl in bytecode:
-      lineno, op_code = tpl[1], tpl[2]
-      if op_code == BUILD_CLASS:
-        class_lines.add(lineno)
-      elif op_code == MAKE_FUNCTION:
-        method_lines.add(lineno)
+    # code object -> (start, end)
+    co_lines = {}
+    classes_co = set()
+    methods_co = set()
 
-    method_lines = method_lines.difference(class_lines)
-
-    def unroll_through_end(s_lineno, j, length, start_index):
-      j += 1
-      while j < length and bytecode[j][1] == s_lineno:
-        j += 1
-      if j >= length - 1:
-        return j - 1
-
-      while j < length:
-        tpl = bytecode[j]
-        index, lineno, op_code = tpl[0], tpl[1], tpl[2]
-        if lineno == s_lineno:
-          while j < length and bytecode[j][1] == s_lineno:
-            j += 1
-          return j - 1
-        j += 1
-      return j
-
-
-    # Once we get the line numbers, we need to go and find the indices
-    # for the start/end of the declarations
-    blacklist = set()
     i, length = 0, len(bytecode)
     while i < length:
       tpl = bytecode[i]
-      index, lineno, op_code = tpl[0], tpl[1], tpl[2]
-      if lineno in blacklist:
-        i += 1
-        continue
-
-      if lineno in class_lines:
-        start_index = i
-        end_index = unroll_through_end(lineno, i, length, start_index)
-        class_indices.add(( start_index, end_index ))
-        blacklist.add(lineno)
-
-      elif lineno in method_lines:
-        start_index = i
-        end_index = unroll_through_end(lineno, i, length, start_index)
-        method_indices.add(( start_index, end_index ))
-        blacklist.add(lineno)
-
+      lineno, op_code, co = tpl[1], tpl[2], tpl[5]
+      if op_code == BUILD_CLASS:
+        class_co = bytecode[i - 3][5]
+        co_lines[class_co] = lineno
+        classes_co.add(class_co)
+        class_lines.add(lineno)
+      elif op_code in (MAKE_FUNCTION, MAKE_CLOSURE):
+        if i < length - 3 and bytecode[i + 1][2] == CALL_FUNCTION and bytecode[i + 2][2] == BUILD_CLASS:
+          i += 1
+          continue
+        prev_co = bytecode[i - 1][5]
+        method_lines.add(lineno)
+        methods_co.add(prev_co)
+        co_lines[prev_co] = lineno
       i += 1
+
+    # This multi-pass should be refactored...
+    for decl_co in co_lines:
+      if decl_co not in methods_co and decl_co not in classes_co:
+        continue
+      dest_set = method_indices if decl_co in methods_co else class_indices
+      i, length = 0, len(bytecode)
+      start_index, end_index = 0, 0
+      while i < length:
+        co = bytecode[i][5]
+        if co == decl_co:
+          start_index = i
+          j = i + 1
+          while j < length:
+            if bytecode[j][5] == decl_co:
+              end_index = j
+            j += 1
+          break
+        i += 1
+      # logger.debug("decl_co(%d, %d) := %s", start_index, end_index, decl_co)
+      dest_set.add((start_index, end_index))
 
     return class_indices, method_indices
 
