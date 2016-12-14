@@ -9,10 +9,13 @@
   :license: Apache 2, see LICENSE for more details.
 """
 
+from .ast import Statement
 
 class BasicBlock(object):
   """
-    Represents a basic block from the bytecode.
+    Represents a basic block from the bytecode. It's a bit more than just
+    the location in the bytecode since it also contains the jump targets
+    which are used during the construction of the control flow graph.
   """
   ENTRY = 1
   IMPLICIT_RETURN = 2
@@ -30,9 +33,14 @@ class BasicBlock(object):
     self._end_target = -1
     self._fallthrough = False
     self._has_return_path = False
+    self._bytecode = None
+    self._statements = None
 
   @property
   def kind(self):
+    """
+      Returns the kind of basic block.
+    """
     return self._kind
 
   @kind.setter
@@ -41,6 +49,9 @@ class BasicBlock(object):
 
   @property
   def decl(self):
+    """
+      Returns the ``Declaration`` associated to this basic block.
+    """
     return self._decl
 
   @decl.setter
@@ -49,6 +60,9 @@ class BasicBlock(object):
 
   @property
   def index(self):
+    """
+      Returns the start index (in the bytecode) for this basic block.
+    """
     return self._index
 
   @index.setter
@@ -56,7 +70,39 @@ class BasicBlock(object):
     self._index = value
 
   @property
+  def bytecode(self):
+    """
+      Returns the bytecode associated to this basic block.
+    """
+    if self._bytecode is None:
+      if self.kind in (BasicBlock.ENTRY, BasicBlock.IMPLICIT_RETURN):
+        self._bytecode = []
+      else:
+        bc = self.decl.bytecode
+        start_index = [j for j in range(len(bc)) if bc[j][0] == 0][0]
+        prev_co = bc[start_index][5]
+        slice_bytecode = [tpl for tpl in bc[start_index:] if tpl[5] == prev_co]
+        bc = []
+        for l in slice_bytecode:
+          idx = l[0]
+          if idx >= self._index and idx < self._index + self._length:
+            bc.append(l)
+        self._bytecode = bc
+    return self._bytecode
+
+  @property
+  def statements(self):
+    if self._statements is None:
+      from .flow import ControlFlow
+      self._statements = []
+      ControlFlow.create_statements(self, self.bytecode, self._statements)
+    return self._statements
+
+  @property
   def length(self):
+    """
+      Returns the length of the basic block (size of all the instructions)
+    """
     return self._length
 
   @length.setter
@@ -82,6 +128,9 @@ class BasicBlock(object):
 
   @property
   def jumps(self):
+    """
+      Returns the list of all the targets from this basic block.
+    """
     return self._jumps
 
   def clear_jumps(self):
@@ -92,6 +141,10 @@ class BasicBlock(object):
 
   @property
   def end_target(self):
+    """
+      Returns the end of scope of the target. This is only meaningful for
+      a loop or ``with``.
+    """
     return self._end_target
 
   @end_target.setter
@@ -104,3 +157,4 @@ class BasicBlock(object):
       end_target = ', target=%d' % self.end_target
     return 'BasicBlock(%s, %d->%d, jumps=%s%s)' \
            % (self.kind, self.index, (self.index + self.length), self.jumps, end_target)
+

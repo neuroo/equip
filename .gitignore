@@ -10,3 +10,4 @@
 *.json
 TODO.txt
 .pypirc
+.DS_Store

@@ -16,6 +16,7 @@ from dis import findlinestarts
 from array import array
 
 from ..utils.log import logger
+from ..analysis.python.opcodes import *
 from ..bytecode.code import BytecodeObject
 from ..bytecode.utils import get_debug_code_object_dict, \
                              get_debug_code_object_info, \
@@ -23,12 +24,6 @@ from ..bytecode.utils import get_debug_code_object_dict, \
                              CO_FIELDS
 
 PLACEHOLDER = -2
-RETURN_VALUE = 83
-LOAD_NAME = 101
-LOAD_GLOBAL = 116
-LOAD_FAST = 124
-STORE_FAST = 125
-
 
 #: This global name is always injected as a new variable in ``co_varnames``,
 #: and used to carry the return values. We essentially add::

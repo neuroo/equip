@@ -81,7 +81,7 @@ class Walker(object):
 # when computing dominators on smallish CFGs
 def dfs_postorder_nodes(graph, root):
   import sys
-  sys.setrecursionlimit(500)
+  sys.setrecursionlimit(5000)
   visited = set()
 
   def _dfs(node, _visited):
@@ -94,4 +94,7 @@ def dfs_postorder_nodes(graph, root):
     yield node
 
   return [n for n in _dfs(root, visited)]
+
+
+
 

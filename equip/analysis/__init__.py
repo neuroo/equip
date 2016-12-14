@@ -9,5 +9,14 @@
   :license: Apache 2, see LICENSE for more details.
 """
 
-from .block import BasicBlock
+from .block import BasicBlock, Statement
 from .flow import ControlFlow
+from .call import CallGraph
+from .dataflow import ForwardDataflow,  \
+                      BackwardDataflow, \
+                      Dataflow,         \
+                      Lattice,          \
+                      State,            \
+                      Transfer
+from .defs import DefUse
+from .types import TypeInference

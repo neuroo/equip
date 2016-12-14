@@ -13,16 +13,19 @@ from ...utils.log import logger
 from .graphs import DiGraph, Node, Edge
 from .traversals import dfs_postorder_nodes
 
+
 class DominatorTree(object):
   """
     Handles the dominator trees (dominator/post-dominator), and the
-    computation of the dominance frontier.
+    computation of the dominance/post-dominance frontier.
   """
+
   def __init__(self, cfg):
     self._cfg = cfg
     self._doms = {}
     self._pdoms = {}
     self._df = {}
+    self._pdf = {}
     self.build()
 
   @property
@@ -56,22 +59,27 @@ class DominatorTree(object):
     """
     return self._df
 
+  @property
+  def post_frontier(self):
+    """
+      Returns the dict containing the mapping of each node to its
+      post-dominance frontier (a set).
+    """
+    return self._pdf
 
   def build(self):
-    try:
-      graph = self.cfg.graph
-      entry = self.cfg.entry_node
-      exit = self.cfg.exit_node
+    graph = self.cfg.graph
+    entry = self.cfg.entry_node
+    exit = self.cfg.exit_node
 
-      # Inverse the CFG to compute the post dominators using the same algo
-      inverted_graph = graph.inverse()
+    # Inverse the CFG to compute the post dominators using the same algo
+    inverted_graph = graph.inverse()
 
-      self.__build_dominators(graph, entry)
-      self.__build_dominators(inverted_graph, exit, post_dom=True)
-      self.__build_df()
-    except Exception, ex:
-      logger.error("Exception %s", repr(ex), exc_info=ex)
+    self.__build_dominators(graph, entry)
+    self.__build_df(graph)
 
+    self.__build_dominators(inverted_graph, exit, post_dom=True)
+    self.__build_df(inverted_graph, post_dom=True)
 
   def __build_dominators(self, graph, entry, post_dom=False):
     """
@@ -113,10 +121,8 @@ class DominatorTree(object):
           break
       return finger1
 
-    i = 0
     changed = True
     while changed:
-      i += 1
       changed = False
       for b in reversed(post_order):
         if b == entry:
@@ -132,30 +138,27 @@ class DominatorTree(object):
         if b not in doms or doms[b] != new_idom:
           doms[b] = new_idom
           changed = True
-    # self.print_tree(post_dom)
+    self.print_tree(post_dom)
 
-
-  def __build_df(self):
+  def __build_df(self, graph, post_dom=False):
     """
       Builds the dominance frontier.
     """
-    graph = self.cfg.graph
-    entry = self.cfg.entry_node
+    doms = self._doms if not post_dom else self._pdoms
+    df = self._df if not post_dom else self._pdf
 
-    self._df = {}
     for b in graph.nodes:
-      self._df[b] = set()
+      df[b] = set()
 
     for b in graph.nodes:
       predecessors = graph.in_edges(b)
-      if len(predecessors) >= 2:
+      if len(predecessors) > 1:
         for p_edge in predecessors:
           p = p_edge.source
           runner = p
-          while runner != self._doms[b]:
-            self._df[runner].add(b)
-            runner = self._doms[runner]
-
+          while runner != doms[b]:
+            df[runner].add(b)
+            runner = doms[runner]
 
   def print_tree(self, post_dom=False):
     g_nodes = {}
@@ -164,19 +167,16 @@ class DominatorTree(object):
 
     for node in doms:
       if node not in g_nodes:
-        cur_node = g.make_add_node(data=node.data)
+        cur_node = g.make_add_node(data=node)
         g_nodes[node] = cur_node
       cur_node = g_nodes[node]
 
       parent = doms.get(node, None)
       if parent is not None and parent != node:
         if parent not in g_nodes:
-          parent_node = g.make_add_node(data=parent.data)
+          parent_node = g.make_add_node(data=parent)
           g_nodes[parent] = parent_node
         parent_node = g_nodes[parent]
         g.make_add_edge(parent_node, cur_node)
 
     logger.debug("%sDOM-tree :=\n%s", 'POST-' if post_dom else '', g.to_dot())
-
-
-

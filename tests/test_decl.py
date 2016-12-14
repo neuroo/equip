@@ -3,7 +3,7 @@ from testutils import get_co, get_bytecode
 
 from equip import BytecodeObject
 from equip.bytecode import MethodDeclaration, TypeDeclaration, ModuleDeclaration
-from equip.bytecode.utils import show_bytecode
+from equip.bytecode.utils import show_bytecode, iter_decl
 
 
 SIMPLE_PROGRAM = """
@@ -18,7 +18,7 @@ class Foo(object):
   def __init__(self):
     pass
 
-class Bar:
+class Bar(Foo):
   def __init__(self):
     pass
 
@@ -103,3 +103,47 @@ def test_nested_methods_lambdas():
   nested_1_2_decl = bytecode_object.get_decl(method_name='nested_1_2')
   assert nested_1_2_decl is not None
   assert len(nested_1_2_decl.children) == 0
+
+
+INHERITANCE_CASE = """
+class Base:
+  pass
+
+class OtherBase:
+  pass
+
+def gen(*args):
+  pass
+
+@gen
+@gen
+@gen
+@gen
+class NewBase(object):
+  pass
+
+class Child1(Base):
+  pass
+
+class Child2(Base, OtherBase, NewBase):
+  pass
+
+"""
+def test_inheritance():
+  co_simple = get_co(INHERITANCE_CASE)
+  assert co_simple is not None
+  bytecode_object = BytecodeObject('<string>')
+  bytecode_object.parse_code(co_simple)
+
+  TEST_CASE = {
+    'Base': 0,
+    'OtherBase': 0,
+    'NewBase': 0,
+    'Child1': 1,
+    'Child2': 3
+  }
+
+  for decl in iter_decl(bytecode_object.main_module):
+    if not isinstance(decl, TypeDeclaration):
+      continue
+      assert len(decl.superclasses) == TEST_CASE[decl.type_name]

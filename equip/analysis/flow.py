@@ -11,32 +11,17 @@
 import opcode
 from operator import itemgetter, attrgetter
 from itertools import tee, izip
-
-from .graph import DiGraph, Edge, Node, Walker, EdgeVisitor
-from .graph.dominators import DominatorTree
-from .block import BasicBlock
 from ..utils.log import logger
+from ..utils.structures import intervalmap
 from ..bytecode.utils import show_bytecode
 
-
-BREAK_LOOP = 80
-RETURN_VALUE = 83
-FOR_ITER = 93
-JUMP_FORWARD = 110
-JUMP_IF_FALSE_OR_POP = 111
-JUMP_IF_TRUE_OR_POP = 112
-JUMP_ABSOLUTE = 113
-POP_JUMP_IF_FALSE = 114
-POP_JUMP_IF_TRUE =  115
-JUMP_OPCODES = opcode.hasjabs + opcode.hasjrel
-SETUP_LOOP = 120
-SETUP_EXCEPT = 121
-SETUP_FINALLY = 122
-RAISE_VARARGS = 130
-SETUP_WITH = 143
-
-
-NO_FALL_THROUGH = (JUMP_ABSOLUTE, JUMP_FORWARD)
+from .graph import DiGraph, Edge, Node, Walker, EdgeVisitor, Tree, TreeNode
+from .graph import DominatorTree, ControlDependence
+from .block import BasicBlock
+from .ast import Statement, Expression
+from .constraint import Constraint
+from .python.effects import get_stack_effect
+from .python.opcodes import *
 
 
 class ControlFlow(object):
@@ -67,12 +52,15 @@ class ControlFlow(object):
   CFG_TMP_RETURN = -1
   CFG_TMP_BREAK = -2
   CFG_TMP_RAISE = -3
+  CFG_TMP_CONTINUE = -4
 
   def __init__(self, decl):
     self._decl = decl
     self._blocks = None
     self._block_idx_map = {}
     self._block_nodes = {}
+    self._block_intervals = None
+    self._conds = None
     self._frames = None
     self._graph = None
     self._entry = None
@@ -80,6 +68,7 @@ class ControlFlow(object):
     self._entry_node = None
     self._exit_node = None
     self._dom = None
+    self._cdg = None
     self.analyze()
 
   @property
@@ -144,6 +133,24 @@ class ControlFlow(object):
     return self._block_nodes
 
   @property
+  def blocks_intervals(self):
+    if self._block_intervals is None:
+      self._block_intervals = intervalmap()
+      for block in self.blocks:
+        self._block_intervals[block.index:block.index + block.length] = block
+    return self._block_intervals
+
+  @property
+  def block_constraints(self):
+    """
+      Returns the constraints associated with each ``N_CONDITION`` node
+      in the CFG. This is lazily computed.
+    """
+    if self._conds is None:
+      self.compute_conditions()
+    return self._conds
+
+  @property
   def frames(self):
     return self._frames
 
@@ -158,14 +165,22 @@ class ControlFlow(object):
   def dominators(self):
     """
       Returns the ``DominatorTree`` that contains:
-       - Dominator tree (dict of IDom)
-       - Post dominator tree (doc of PIDom)
-       - Dominance frontier (dict of CFG node -> set CFG nodes)
+       - Dominator/Post-dominator tree (dict of IDom/PIDom)
+       - Dominance/Post-domimance frontier (dict of CFG node -> set CFG nodes)
+      This is lazily computed.
     """
     if self._dom is None:
       self._dom = DominatorTree(self)
     return self._dom
 
+  @property
+  def control_dependence(self):
+    """
+      Returns the ``ControlDependence`` graph. This is lazily computed.
+    """
+    if self._cdg is None:
+      self._cdg = ControlDependence(self)
+    return self._cdg
 
   def analyze(self):
     """
@@ -178,7 +193,6 @@ class ControlFlow(object):
     self._blocks = ControlFlow.make_blocks(self.decl, bytecode)
     self.__build_flowgraph(bytecode)
     # logger.debug("CFG(%s) :=\n%s", self.decl, self.graph.to_dot())
-
 
   def __build_flowgraph(self, bytecode):
     g = DiGraph(multiple_edges=False)
@@ -196,15 +210,11 @@ class ControlFlow(object):
       block_node = g.make_add_node(kind=node_kind, data=block)
       self._block_nodes[block] = block_node
       if block.index == 0:
-        g.make_add_edge(self.entry_node,
-                        self._block_nodes[block],
-                        kind=ControlFlow.E_UNCOND)
+        g.make_add_edge(self.entry_node, self._block_nodes[block], kind=ControlFlow.E_UNCOND)
       if block.index >= last_block_index:
         last_block = block
         last_block_index = block.index
-    g.make_add_edge(self._block_nodes[last_block],
-                    self.exit_node,
-                    kind=ControlFlow.E_UNCOND)
+    g.make_add_edge(self._block_nodes[last_block], self.exit_node, kind=ControlFlow.E_UNCOND)
 
     sorted_blocks = sorted(self.blocks, key=attrgetter('_index'))
     i, length = 0, len(sorted_blocks)
@@ -216,17 +226,17 @@ class ControlFlow(object):
           if jump_index <= ControlFlow.CFG_TMP_RETURN:
             continue
           target_block = self._block_idx_map[jump_index]
-          g.make_add_edge(self._block_nodes[cur_block],
-                          self._block_nodes[target_block],
-                          kind=branch_kind)
+          g.make_add_edge(
+            self._block_nodes[cur_block], self._block_nodes[target_block], kind=branch_kind)
       i += 1
 
     self._graph = g
     self.__finalize()
+    self._graph.freeze()
 
+    logger.debug("CFG :=\n%s", self._graph.to_dot())
 
   def __finalize(self):
-
     def has_true_false_branches(list_edges):
       has_true, has_false = False, False
       for edge in list_edges:
@@ -272,7 +282,8 @@ class ControlFlow(object):
         continue
       node.kind = ControlFlow.N_CONDITION
 
-    # Handle return/break statements:
+    # Handle continue/return/break statements:
+    #  - blocks with continue are simply connected to the parent loop
     #  - blocks with returns are simply connected to the IMPLICIT_RETURN
     #    and previous out edges removed
     #  - blocks with breaks are connected to the end of the current loop
@@ -292,18 +303,102 @@ class ControlFlow(object):
         for edge in out_edges:
           self.graph.remove_edge(edge)
 
-        self.graph.make_add_edge(node,
-                                 self.block_nodes_dict[target_block],
-                                 kind=ControlFlow.E_UNCOND)
+        self.graph.make_add_edge(
+          node, self.block_nodes_dict[target_block], kind=ControlFlow.E_UNCOND)
+
       if ControlFlow.CFG_TMP_RETURN in cfg_tmp_values:
         # Remove existing out edges and add a RETURN edge to the IMPLICIT_RETURN
         out_edges = self.graph.out_edges(node)
         for edge in out_edges:
           self.graph.remove_edge(edge)
-        self.graph.make_add_edge(node,
-                                 self._exit_node,
-                                 kind=ControlFlow.E_RETURN)
+        self.graph.make_add_edge(node, self._exit_node, kind=ControlFlow.E_RETURN)
 
+      if ControlFlow.CFG_TMP_CONTINUE in cfg_tmp_values:
+        parent_loop = get_parent_loop(node)
+        if not parent_loop:
+          logger.error("Cannot find parent loop for %s", node)
+          continue
+
+        out_edges = self.graph.out_edges(node)
+        for edge in out_edges:
+          self.graph.remove_edge(edge)
+
+        self.graph.make_add_edge(node, parent_loop, kind=ControlFlow.E_UNCOND)
+
+    # Handle optimizations that left unreachable JUMPS
+    for node in self.graph.roots():
+      if node.kind == ControlFlow.N_ENTRY:
+        continue
+      index, lineno, op, arg, cflow_in, code_object = node.data.bytecode[0]
+      if op in JUMP_OPCODES:
+        self.graph.remove_node(node)
+
+  def compute_conditions(self):
+    """
+      Force the computation of condition constraints on the entire CFG.
+    """
+    self._conds = {}
+    for node in self.graph.nodes:
+      if node.kind != ControlFlow.N_CONDITION:
+        continue
+      self.__record_condition(node)
+
+  # Parses the conditions and convert them into symbolic conditions for
+  # using in path-sensitive analysis. This essentially builds a simple
+  # AST for the conditional only.
+  def __record_condition(self, node):
+    block = node.data
+    bytecode = node.data.bytecode
+    length = len(bytecode)
+    if bytecode[length - 1][2] in NO_FALL_THROUGH:
+      return
+    i = length - 2
+    cond_stack_size = 1 # Current operator takes one from the stack
+    condition_bytecode = []
+    k = i
+    while cond_stack_size != 0:
+      condition_bytecode.insert(0, bytecode[k])
+      try:
+        pop, push = get_stack_effect(bytecode[k][2], bytecode[k][3])
+      except:
+        # Skip entirely the creation of conditionals
+        return
+      cond_stack_size += (pop - push)
+      k -= 1
+
+    if not condition_bytecode:
+      return
+
+    def process_children(parent, j):
+      if j < 0:
+        return j - 1, None
+      index, lineno, op, arg, cflow_in, code_object = condition_bytecode[j]
+      pop, push = get_stack_effect(op, arg)
+
+      current_node = TreeNode(kind=opcode.opname[op], data=(op, arg))
+      if pop < 1:
+        return j - 1, current_node
+
+      current_node.reserve_children(pop)
+      prev_offset = new_offset = j - 1
+      while pop > 0:
+        offset, child = process_children(current_node, new_offset)
+        if child is None:
+          break
+        current_node.insert_child(pop - 1, child)
+        prev_offset = new_offset
+        new_offset = offset
+        pop -= 1
+
+      return new_offset, current_node
+
+    cstr = Constraint()
+
+    i = len(condition_bytecode) - 1
+    _, root = process_children(None, i)
+    cstr.root = root
+    # Associate the out-constraint with the block
+    self._conds[block] = cstr
 
   BLOCK_NODE_KIND = {
     BasicBlock.UNKNOWN: N_UNKNOWN,
@@ -318,13 +413,11 @@ class ControlFlow(object):
   def get_kind_from_block(block):
     return ControlFlow.BLOCK_NODE_KIND[block.kind]
 
-
   @staticmethod
   def get_pairs(iterable):
     a, b = tee(iterable)
     next(b, None)
     return izip(a, b)
-
 
   @staticmethod
   def make_blocks(decl, bytecode):
@@ -337,13 +430,14 @@ class ControlFlow(object):
     """
     blocks = set()
     block_map = {} # bytecode index -> block
+    logger.debug("CFG:\n%s", show_bytecode(bytecode))
 
     i, length = 0, len(bytecode)
     start_index = [j for j in range(length) if bytecode[j][0] == 0][0]
     prev_co = bytecode[start_index][5]
+    prev_op = None
 
     slice_bytecode = [tpl for tpl in bytecode[start_index:] if tpl[5] == prev_co]
-    # logger.debug("Current bytecode:\n%s", show_bytecode(slice_bytecode))
 
     slice_length = len(slice_bytecode)
     known_targets = ControlFlow.find_targets(slice_bytecode)
@@ -351,8 +445,6 @@ class ControlFlow(object):
     known_targets.add(1 + max([tpl[0] for tpl in slice_bytecode]))
     known_targets = list(known_targets)
     known_targets.sort()
-
-    # logger.debug("Targets: %s", [d for d in ControlFlow.get_pairs(known_targets)])
 
     slice_bytecode_indexed = {}
     idx = 0
@@ -410,10 +502,15 @@ class ControlFlow(object):
           cur_block.has_return_path = True
           cur_block.add_jump(ControlFlow.CFG_TMP_BREAK, ControlFlow.E_UNCOND)
 
+        elif op == CONTINUE_LOOP:
+          cur_block.has_return_path = False
+          cur_block.add_jump(ControlFlow.CFG_TMP_CONTINUE, ControlFlow.E_UNCOND)
+
         elif op == RAISE_VARARGS:
           cur_block.has_return_path = False
           cur_block.add_jump(ControlFlow.CFG_TMP_RAISE, ControlFlow.E_UNCOND)
 
+        prev_op = op
         i += 1
 
       # If the last block is not a NO_FALL_THROUGH, we connect the fall through
@@ -433,8 +530,40 @@ class ControlFlow(object):
       block_map[start_index] = cur_block
       blocks.add(cur_block)
 
+    logger.debug("Blocks := %s", blocks)
+
     return blocks
 
+  @staticmethod
+  def create_statements(block, bytecode, container):
+    """
+      Creates a set of statements out of the basic block.
+
+      :param block: The parent basic block.
+      :param bytecode: The bytecode of the basic block.
+      :param container: The list that will contain all the statements in this basic block.
+    """
+    i = len(bytecode) - 1
+    while i >= 0:
+      stack_effect = 0
+      j = i
+      is_first = True
+      while j >= 0:
+        try:
+          pop, push = get_stack_effect(bytecode[j][2], bytecode[j][3])
+          stack_effect += (pop - push) if not is_first else pop
+          is_first = False
+          if stack_effect == 0:
+            stmt = Statement(block, j, i)
+            container.insert(0, stmt)
+            break
+          j -= 1
+        except Exception, ex:
+          stmt = Statement(block, i, i)
+          container.insert(0, stmt)
+          break
+      i = j
+      i -= 1
 
   @staticmethod
   def block_kind_from_op(op):
@@ -443,7 +572,6 @@ class ControlFlow(object):
     # Cannot make the decision at this point, need to await the finalization
     # of the CFG
     return BasicBlock.UNKNOWN
-
 
   @staticmethod
   def find_targets(bytecode):
@@ -462,4 +590,5 @@ class ControlFlow(object):
       i += 1
     return targets
 
-
+  def __repr__(self):
+    return 'ControlFlow(decl=%s, blocks=%d)' % (self.decl, len(self.blocks))

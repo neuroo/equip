@@ -13,3 +13,4 @@ from .bytecode import BytecodeVisitor
 from .classes import ClassVisitor
 from .methods import MethodVisitor
 from .modules import ModuleVisitor
+from .blocks import BlockVisitor

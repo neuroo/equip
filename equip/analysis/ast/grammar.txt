@@ -1,0 +1,265 @@
+# Grammar for Python 2.7
+
+# Note:  Changing the grammar specified in this file will most likely
+#        require corresponding changes in the parser module
+#        (../Modules/parsermodule.c).  If you can't make the changes to
+#        that module yourself, please co-ordinate the required changes
+#        with someone who can; ask around on python-dev for help.  Fred
+#        Drake <fdrake@acm.org> will probably be listening there.
+
+# NOTE WELL: You should also follow all the steps listed in PEP 306,
+# "How to Change Python's Grammar"
+
+# Start symbols for the grammar:
+#       single_input is a single interactive statement;
+#       file_input is a module or sequence of commands read from an input file;
+#       eval_input is the input for the eval() and input() functions.
+# NB: compound_stmt in single_input is followed by extra NEWLINE!
+single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
+file_input: (NEWLINE | stmt)* ENDMARKER
+eval_input: testlist NEWLINE* ENDMARKER
+
+decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
+decorators: decorator+
+decorated: decorators (classdef | funcdef)
+funcdef: 'def' NAME parameters ':' suite
+parameters: '(' [varargslist] ')'
+varargslist: ((fpdef ['=' test] ',')*
+              ('*' NAME [',' '**' NAME] | '**' NAME) |
+              fpdef ['=' test] (',' fpdef ['=' test])* [','])
+fpdef: NAME | '(' fplist ')'
+fplist: fpdef (',' fpdef)* [',']
+
+stmt: simple_stmt | compound_stmt
+simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
+small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt |
+             import_stmt | global_stmt | exec_stmt | assert_stmt)
+expr_stmt: testlist (augassign (yield_expr|testlist) |
+                     ('=' (yield_expr|testlist))*)
+augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
+            '<<=' | '>>=' | '**=' | '//=')
+# For normal assignments, additional restrictions enforced by the interpreter
+print_stmt: 'print' ( [ test (',' test)* [','] ] |
+                      '>>' test [ (',' test)+ [','] ] )
+del_stmt: 'del' exprlist
+pass_stmt: 'pass'
+flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
+break_stmt: 'break'
+continue_stmt: 'continue'
+return_stmt: 'return' [testlist]
+yield_stmt: yield_expr
+raise_stmt: 'raise' [test [',' test [',' test]]]
+import_stmt: import_name | import_from
+import_name: 'import' dotted_as_names
+import_from: ('from' ('.'* dotted_name | '.'+)
+              'import' ('*' | '(' import_as_names ')' | import_as_names))
+import_as_name: NAME ['as' NAME]
+dotted_as_name: dotted_name ['as' NAME]
+import_as_names: import_as_name (',' import_as_name)* [',']
+dotted_as_names: dotted_as_name (',' dotted_as_name)*
+dotted_name: NAME ('.' NAME)*
+global_stmt: 'global' NAME (',' NAME)*
+exec_stmt: 'exec' expr ['in' test [',' test]]
+assert_stmt: 'assert' test [',' test]
+
+compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated
+if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
+while_stmt: 'while' test ':' suite ['else' ':' suite]
+for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
+try_stmt: ('try' ':' suite
+           ((except_clause ':' suite)+
+            ['else' ':' suite]
+            ['finally' ':' suite] |
+           'finally' ':' suite))
+with_stmt: 'with' with_item (',' with_item)*  ':' suite
+with_item: test ['as' expr]
+# NB compile.c makes sure that the default except clause is last
+except_clause: 'except' [test [('as' | ',') test]]
+suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
+
+# Backward compatibility cruft to support:
+# [ x for x in lambda: True, lambda: False if x() ]
+# even while also allowing:
+# lambda x: 5 if x else 2
+# (But not a mix of the two)
+testlist_safe: old_test [(',' old_test)+ [',']]
+old_test: or_test | old_lambdef
+old_lambdef: 'lambda' [varargslist] ':' old_test
+
+test: or_test ['if' or_test 'else' test] | lambdef
+or_test: and_test ('or' and_test)*
+and_test: not_test ('and' not_test)*
+not_test: 'not' not_test | comparison
+comparison: expr (comp_op expr)*
+comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
+expr: xor_expr ('|' xor_expr)*
+xor_expr: and_expr ('^' and_expr)*
+and_expr: shift_expr ('&' shift_expr)*
+shift_expr: arith_expr (('<<'|'>>') arith_expr)*
+arith_expr: term (('+'|'-') term)*
+term: factor (('*'|'/'|'%'|'//') factor)*
+factor: ('+'|'-'|'~') factor | power
+power: atom trailer* ['**' factor]
+atom: ('(' [yield_expr|testlist_comp] ')' |
+       '[' [listmaker] ']' |
+       '{' [dictorsetmaker] '}' |
+       '`' testlist1 '`' |
+       NAME | NUMBER | STRING+)
+listmaker: test ( list_for | (',' test)* [','] )
+testlist_comp: test ( comp_for | (',' test)* [','] )
+lambdef: 'lambda' [varargslist] ':' test
+trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
+subscriptlist: subscript (',' subscript)* [',']
+subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]
+sliceop: ':' [test]
+exprlist: expr (',' expr)* [',']
+testlist: test (',' test)* [',']
+dictorsetmaker: ( (test ':' test (comp_for | (',' test ':' test)* [','])) |
+                  (test (comp_for | (',' test)* [','])) )
+
+classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
+
+arglist: (argument ',')* (argument [',']
+                         |'*' test (',' argument)* [',' '**' test]
+                         |'**' test)
+# The reason that keywords are test nodes instead of NAME is that using NAME
+# results in an ambiguity. ast.c makes sure it's a NAME.
+argument: test [comp_for] | test '=' test
+
+list_iter: list_for | list_if
+list_for: 'for' exprlist 'in' testlist_safe [list_iter]
+list_if: 'if' old_test [list_iter]
+
+comp_iter: comp_for | comp_if
+comp_for: 'for' exprlist 'in' or_test [comp_iter]
+comp_if: 'if' old_test [comp_iter]
+
+testlist1: test (',' test)*
+
+# not used in grammar, but may appear in "node" passed from Parser to Compiler
+encoding_decl: NAME
+
+yield_expr: 'yield' [testlist]
+
+
+#
+#
+#
+#
+
+
+
+module Python version "$Revision$"
+{
+  mod = Module(stmt* body)
+      | Interactive(stmt* body)
+      | Expression(expr body)
+
+      -- not really an actual node but useful in Jython's typesystem.
+      | Suite(stmt* body)
+
+  stmt = FunctionDef(identifier name, arguments args,
+                            stmt* body, expr* decorator_list)
+        | ClassDef(identifier name, expr* bases, stmt* body, expr* decorator_list)
+        | Return(expr? value)
+
+        | Delete(expr* targets)
+        | Assign(expr* targets, expr value)
+        | AugAssign(expr target, operator op, expr value)
+
+        -- not sure if bool is allowed, can always use int
+        | Print(expr? dest, expr* values, bool nl)
+
+        -- use 'orelse' because else is a keyword in target languages
+        | For(expr target, expr iter, stmt* body, stmt* orelse)
+        | While(expr test, stmt* body, stmt* orelse)
+        | If(expr test, stmt* body, stmt* orelse)
+        | With(expr context_expr, expr? optional_vars, stmt* body)
+
+        -- 'type' is a bad name
+        | Raise(expr? type, expr? inst, expr? tback)
+        | TryExcept(stmt* body, excepthandler* handlers, stmt* orelse)
+        | TryFinally(stmt* body, stmt* finalbody)
+        | Assert(expr test, expr? msg)
+
+        | Import(alias* names)
+        | ImportFrom(identifier? module, alias* names, int? level)
+
+        -- Doesn't capture requirement that locals must be
+        -- defined if globals is
+        -- still supports use as a function!
+        | Exec(expr body, expr? globals, expr? locals)
+
+        | Global(identifier* names)
+        | Expr(expr value)
+        | Pass | Break | Continue
+
+        -- XXX Jython will be different
+        -- col_offset is the byte offset in the utf8 string the parser uses
+        attributes (int lineno, int col_offset)
+
+        -- BoolOp() can use left & right?
+  expr = BoolOp(boolop op, expr* values)
+       | BinOp(expr left, operator op, expr right)
+       | UnaryOp(unaryop op, expr operand)
+       | Lambda(arguments args, expr body)
+       | IfExp(expr test, expr body, expr orelse)
+       | Dict(expr* keys, expr* values)
+       | Set(expr* elts)
+       | ListComp(expr elt, comprehension* generators)
+       | SetComp(expr elt, comprehension* generators)
+       | DictComp(expr key, expr value, comprehension* generators)
+       | GeneratorExp(expr elt, comprehension* generators)
+       -- the grammar constrains where yield expressions can occur
+       | Yield(expr? value)
+       -- need sequences for compare to distinguish between
+       -- x < 4 < 3 and (x < 4) < 3
+       | Compare(expr left, cmpop* ops, expr* comparators)
+       | Call(expr func, expr* args, keyword* keywords,
+       expr? starargs, expr? kwargs)
+       | Repr(expr value)
+       | Num(object n) -- a number as a PyObject.
+       | Str(string s) -- need to specify raw, unicode, etc?
+       -- other literals? bools?
+
+       -- the following expression can appear in assignment context
+       | Attribute(expr value, identifier attr, expr_context ctx)
+       | Subscript(expr value, slice slice, expr_context ctx)
+       | Name(identifier id, expr_context ctx)
+       | List(expr* elts, expr_context ctx)
+       | Tuple(expr* elts, expr_context ctx)
+
+        -- col_offset is the byte offset in the utf8 string the parser uses
+        attributes (int lineno, int col_offset)
+
+  expr_context = Load | Store | Del | AugLoad | AugStore | Param
+
+  slice = Ellipsis | Slice(expr? lower, expr? upper, expr? step)
+        | ExtSlice(slice* dims)
+        | Index(expr value)
+
+  boolop = And | Or
+
+  operator = Add | Sub | Mult | Div | Mod | Pow | LShift
+                 | RShift | BitOr | BitXor | BitAnd | FloorDiv
+
+  unaryop = Invert | Not | UAdd | USub
+
+  cmpop = Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
+
+  comprehension = (expr target, expr iter, expr* ifs)
+
+  -- not sure what to call the first argument for raise and except
+  excepthandler = ExceptHandler(expr? type, expr? name, stmt* body)
+                  attributes (int lineno, int col_offset)
+
+  arguments = (expr* args, identifier? vararg,
+         identifier? kwarg, expr* defaults)
+
+        -- keyword arguments supplied to call
+        keyword = (identifier arg, expr value)
+
+        -- import name with optional 'as' alias.
+        alias = (identifier name, identifier? asname)
+}
+

@@ -107,12 +107,21 @@ def test_inverse_graph():
   g.add_edge(e14)
   g.add_edge(e24)
   g.add_edge(e34)
+  g.freeze()
 
   logger.debug("Normal graph :=\n%s", g.to_dot())
 
   inv_g = g.inverse()
   logger.debug("Inverse graph :=\n%s", inv_g.to_dot())
 
+  # Check equality of nodes in both graphs
+  for g_node in g.nodes:
+    has_equal = False
+    for inv_node in inv_g.nodes:
+      if g_node == inv_node:
+        has_equal = True
+        break
+    assert has_equal
 
 
 def test_walker():

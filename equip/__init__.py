@@ -24,8 +24,8 @@ from .instrument import Instrumentation
 from .analysis import ControlFlow
 from .bytecode import BytecodeObject
 from .rewriter import SimpleRewriter
-from .visitors import MethodVisitor, \
-                      ClassVisitor, \
-                      ModuleVisitor, \
-                      BytecodeVisitor
-
+from .visitors import MethodVisitor,   \
+                      ClassVisitor,    \
+                      ModuleVisitor,   \
+                      BytecodeVisitor, \
+                      BlockVisitor

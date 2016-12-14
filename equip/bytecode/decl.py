@@ -340,7 +340,7 @@ class TypeDeclaration(Declaration):
     Declaration.__init__(self, Declaration.TYPE, code_object)
     self._type_name = type_name
 
-    self._superclasses = []
+    self._superclasses = set()
     self._methods = None
     self._fields = None
     self._nested_types = None
@@ -355,6 +355,9 @@ class TypeDeclaration(Declaration):
   @property
   def superclasses(self):
     return self._superclasses
+
+  def add_superclass(self, type_name):
+    self._superclasses.add(type_name)
 
   @property
   def methods(self):
@@ -379,7 +382,8 @@ class TypeDeclaration(Declaration):
     return self._nested_types
 
   def __repr__(self):
-    return 'TypeDeclaration#%d(name=%s)' % (self.start_lineno, self.type_name)
+    return 'TypeDeclaration#%d(name=%s, co=%s, super=%s)' \
+           % (self.start_lineno, self.type_name, self.code_object, self.superclasses)
 
 
 class MethodDeclaration(Declaration):
@@ -428,8 +432,8 @@ class MethodDeclaration(Declaration):
     return self._nested_types
 
   def __repr__(self):
-    return 'MethodDeclaration#%d(name=%s, args=%s)' \
-           % (self.start_lineno, self.method_name, self.formal_params)
+    return 'MethodDeclaration#%d(name=%s, args=%s, co=%s)' \
+           % (self.start_lineno, self.method_name, self.formal_params, self.code_object)
 
 
 class FieldDeclaration(Declaration):

@@ -11,10 +11,25 @@
 import opcode
 import types
 import dis
-from opcode import *
-from opcode import __all__ as _opcodes_all
-
 from ..utils.log import logger
+
+
+def iter_decl(decl):
+  """
+    Yield declarations that are nested under the given declaration.
+
+    :param decl: The root ``Declaration`` to visit.
+  """
+  try:
+    worklist = [decl]
+    while worklist:
+      decl = worklist.pop(0)
+      yield decl
+      children = decl.children
+      for child in children:
+        worklist.insert(0, child)
+  except StopIteration, ex:
+    pass
 
 
 # Look into the main_co if we get orignal_co, if so we replace it with new_co
@@ -50,6 +65,10 @@ def update_nested_code_object(main_co, original_co, new_co):
 
 
 def show_bytecode(bytecode, start=0, end=2**32):
+  from ..analysis.python.effects import get_stack_effect
+
+  if bytecode is None:
+    return ''
   buffer = []
   j = start
   end = min(end, len(bytecode) - 1)
@@ -57,20 +76,27 @@ def show_bytecode(bytecode, start=0, end=2**32):
     index, lineno, op, arg, _, co = bytecode[j]
     uid = hex(id(co))[-5:]
 
+    pop_push_str = ''
+    try:
+      pop, push = get_stack_effect(op, arg)
+      pop_push_str = ' (-%d +%d) ' % (pop, push)
+    except ValueError, ex:
+      pop_push_str = '         '
+
     if op >= opcode.HAVE_ARGUMENT:
       rts = repr(arg)
       if len(rts) > 40:
         rts = rts[:40] + '[...]'
       jump_target = ''
       if op in opcode.hasjrel or op in opcode.hasjabs:
-        jump_address = arg if op in hasjabs else index + arg + 3
-        jump_target = ' -------------> (%3d)' % jump_address
+        jump_address = arg if op in opcode.hasjabs else index + arg + 3
+        jump_target = ' -------------> (%4d)' % jump_address
 
-      buffer.append("[%5s]%3d(%3d) %20s(%3d) (%s)%s"
-                    % (uid, lineno, index, opcode.opname[op], op, rts, jump_target))
+      buffer.append("[%5s]%4d(%4d) %20s(%3d)%s (%s)%s"
+                    % (uid, lineno, index, opcode.opname[op], op, pop_push_str, rts, jump_target))
     else:
-      buffer.append("[%5s]%3d(%3d) %20s(%3d)"
-                    % (uid, lineno, index, opcode.opname[op], op))
+      buffer.append("[%5s]%4d(%4d) %20s(%3d)%s"
+                    % (uid, lineno, index, opcode.opname[op], op, pop_push_str))
     j += 1
   return '\n'.join(buffer)
 

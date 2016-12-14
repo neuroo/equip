@@ -230,6 +230,10 @@ class SimpleRewriter(object):
     return self.insert_generic(new_code, location)
 
 
+  def insert_block(self, python_code):
+    pass
+
+
   def inspect_all_globals(self):
     if not self.module:
       return

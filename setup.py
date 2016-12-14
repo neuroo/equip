@@ -24,15 +24,21 @@ class PyTest(TestCommand):
         sys.exit(pytest.main(self.test_args))
 
 
-version = "0.1"
+version = "0.1.a"
 
 setup(name="equip",
       version=version,
       description="Python bytecode instrumentation framework",
       long_description=open("README.rst").read(),
       classifiers=[ # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      'License :: OSI Approved :: Apache Software License',
         'Development Status :: 1 - Planning',
-        'Programming Language :: Python'
+        'Operating System :: OS Independent',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Software Development :: Testing',
+        'Topic :: Software Development :: Disassemblers',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
       ],
       keywords="bytecode injection instrumentation", # Separate with spaces
       author="Romain Gaucher",
@@ -46,7 +52,8 @@ setup(name="equip",
       cmdclass={'test': PyTest},
 
       # TODO: List of packages that this one depends upon:
-      install_requires=[],
+      install_requires=['fn', 'byteplay', 'pycosat'],
+
       # TODO: List executable scripts, provided by the package (this is just an example)
       entry_points={
         'console_scripts':

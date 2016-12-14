@@ -27,11 +27,13 @@ from .decl import ModuleDeclaration, \
                   MethodDeclaration, \
                   FieldDeclaration,  \
                   ImportDeclaration
+from ..visitors import BytecodeVisitor, \
+                       ClassVisitor,    \
+                       MethodVisitor,   \
+                       ModuleVisitor,   \
+                       BlockVisitor
 
-from ..visitors.bytecode import BytecodeVisitor
-from ..visitors.classes import ClassVisitor
-from ..visitors.methods import MethodVisitor
-from ..visitors.modules import ModuleVisitor
+from ..analysis.python.opcodes import *
 
 
 # Flags from code.h
@@ -49,19 +51,6 @@ CO_FUTURE_DIVISION        = 0x2000
 CO_FUTURE_ABSOLUTE_IMPORT = 0x4000
 CO_FUTURE_WITH_STATEMENT  = 0x8000
 
-
-POP_TOP = 1
-IMPORT_STAR = 84
-BUILD_CLASS = 89
-STORE_NAME = 90
-LOAD_CONST = 100
-LOAD_ATTR = 106
-IMPORT_NAME = 108
-IMPORT_FROM = 109
-STORE_FAST = 125
-CALL_FUNCTION = 131
-MAKE_FUNCTION = 132
-MAKE_CLOSURE = 134
 
 class BytecodeObject(object):
   """
@@ -172,6 +161,28 @@ class BytecodeObject(object):
         return
       self.__depth_visitor_run(visitor)
 
+    elif isinstance(visitor, BlockVisitor):
+      self.__visit_basic_blocks(visitor)
+
+
+  def __visit_basic_blocks(self, visitor):
+    from ..analysis import ControlFlow
+
+    worklist = [self.main_module]
+    while worklist:
+      decl = worklist.pop(0)
+      children = decl.children
+      for child in children:
+        worklist.insert(0, child)
+
+      # Build the CFG for the current decl. and call the visitor on it.
+      cflow = ControlFlow(decl)
+      visitor.control_flow = cflow
+      visitor.new_control_flow()
+
+      for block in cflow.blocks:
+        visitor.visit(block)
+
 
   def __depth_visitor_run(self, visitor):
     """
@@ -184,9 +195,8 @@ class BytecodeObject(object):
     is_class_visitor = isinstance(visitor, ClassVisitor)
     stack = [self.main_module]
     while stack:
-      current = stack.pop()
+      current = stack.pop(0)
       children = current.children
-      logger.debug("Visit children: %s", children)
       for child in children:
         if not child:
           continue
@@ -331,6 +341,7 @@ class BytecodeObject(object):
       if tpl_indices in class_decl_indices:
         # Class specific information
         decl = TypeDeclaration(decl_co.co_name, decl_co)
+        self.__build_inheritance(decl, start_index, end_index)
       else:
         # Method specific information
         decl = MethodDeclaration(decl_co.co_name, decl_co)
@@ -363,6 +374,20 @@ class BytecodeObject(object):
       i += 1
 
     logger.debug('\n' + BytecodeObject.build_tree(self.main_module))
+
+
+  def __build_inheritance(self, type_decl, start_index, end_index):
+    i = start_index - 1
+    while i >= 0:
+      index, lineno, op, arg, _, co = self.bytecode[i]
+      if op == LOAD_CONST and arg == type_decl.type_name:
+        break
+      if op != LOAD_NAME:
+        i -= 1
+        continue
+      if op == LOAD_NAME and arg != 'object':
+        type_decl.add_superclass(arg)
+      i -= 1
 
 
   def get_decl(self, code_object=None, method_name=None, type_name=None):
@@ -561,7 +586,7 @@ class BytecodeObject(object):
       i += 1
 
       if op >= opcode.HAVE_ARGUMENT:
-        oparg = ord(code[i]) + (ord(code[i+1]) << 8) + extended_arg
+        oparg = ord(code[i]) + (ord(code[i + 1]) << 8) + extended_arg
         i += 2
         label = -1
         extended_arg = 0
